@@ -4,6 +4,13 @@ import ca.mcgill.ecse211.project.main.Global;
 import lejos.hardware.ev3.LocalEV3;
 import lejos.hardware.lcd.TextLCD;
 
+/**
+ * A Thread responsible of displaying data
+ * on the EV3 screen.
+ * 
+ * @author 	Chen He
+ * @version 1.0
+*/
 public class Display extends Thread {
 
 	public static int SLEEP_TIME = 500;
@@ -11,10 +18,16 @@ public class Display extends Thread {
 	public Display() {
 	}
 	
+    /**
+     * <p>Can display up to five lines on the screen.
+     * It shows the values of the display variables
+     * {@link Global.firstLine}, {@link Global.secondLine}
+     * and so on. These variables can be set by any thread.</p>
+     * <p>The refreshing rate is 2Hz</p>
+    */
 	public void run() {
 		final TextLCD t = LocalEV3.get().getTextLCD();
 		
-	
 		while (true) {
 			
 			t.clear();

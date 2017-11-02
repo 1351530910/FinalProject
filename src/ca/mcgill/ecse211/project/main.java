@@ -13,8 +13,33 @@ import lejos.hardware.sensor.EV3UltrasonicSensor;
 import lejos.hardware.sensor.SensorModes;
 import lejos.robotics.SampleProvider;
 
+
+/**
+ * The goal of this software is to make a robot play a
+ * capture the flag game against another robot. The robot
+ * needs to be able to localize, travel to certain points
+ * in a (12X12) grid, cross a zipline and find the opponent's
+ * flag. Here are the tasks it needs to perform in under 5 minutes:
+ * <ol>
+ * <li>Get the parameters from the server</li>
+ * <li>Transit to the opponent's zone using the zipline or the shallow water</li>
+ * <li>Find the opponent's flag</li>
+ * <li>Transit the its own zone using the other method</li>
+ * <li>Go back to its starting position</li>
+ * </ol>
+ * 
+ * @author 	Vincent d'Orsonnens
+ * @author 	Chen He
+ * @version 1.0
+*/
 public class main {
 	
+
+    /**
+     * This class holds the abstractions, variables
+     * and constants that are shared across different
+     * parts of the software.
+    */
 	public static class Global {
 		
 		// motors
@@ -47,7 +72,7 @@ public class main {
 		public static boolean BlackLineDetected = false;
 		
 		// front light sensor
-		public static FrontColorSensor frontColorSensorThread;
+		public static ColorSensor frontColorSensorThread;
 		public static Port frontColorSensorPort;
 		public static EV3ColorSensor frontColorSensor;
 		public static float[] frontColorData;
@@ -116,6 +141,19 @@ public class main {
 		
 	}
 	
+
+    /**
+     * <p>The main method is responsible for initializing 
+     * all the threads needed to complete the task
+     * </p>
+     * <ul>
+     * <li>{@link Display}</li><li>{@link UltrasonicSensor}</li>
+     * <li>{@link ColorSensor}</li><li>{@link Navigation}</li>
+     * </ul>
+     * <p>It also fetches the game data from the server. If an error
+     * occurs during the connection with the server, the application
+     * exits.</p>
+    */
 	public static void main(String[] args) {
 		// start the display
 		Display display = new Display();
@@ -166,8 +204,8 @@ public class main {
 		
 		// initialize threads
 		Global.usSensorThread = new UltrasonicSensor();
-		Global.leftColorSensorThread  = new ColorSensor();
-		Global.frontColorSensorThread = new FrontColorSensor();
+		Global.leftColorSensorThread  = new ColorSensor(0);
+		Global.frontColorSensorThread = new ColorSensor(1);
 		
 		Navigation mainthread = new Navigation();
 		mainthread.start();
@@ -175,6 +213,12 @@ public class main {
 		
 	}
 	
+    /**
+     * Populates the fields in {@link main.Global} related
+     * to the game data from the given Map
+     *  
+     * @param 	data 	a Map specifying the game data  
+    */
 	private static void parseGameData(Map data) {
 		int redTeam = intVal(data.get("RedTeam"));
 		int redSC = intVal(data.get("RedCorner"));
@@ -249,7 +293,17 @@ public class main {
 		}	
 	}
 	
-	private static int intVal(Object val) {
-		return ((Long) val).intValue();
+    /**
+     * <p>Transforms an object of type Object to an
+     * integer.</p>
+     * <p>Best used with the objects inside a Map 
+     * received from the server.</p>
+     * 
+     * @param	obj 	an Object with an integer value
+     * @return 			an integer with the same value as obj
+     * @see 			main#parseGameData 
+    */
+	private static int intVal(Object obj) {
+		return ((Long) obj).intValue();
 	}
 }

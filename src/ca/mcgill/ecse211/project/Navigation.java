@@ -86,15 +86,11 @@ public class Navigation extends Thread {
 		double angleWithY = Math.atan(dx/dy);
 		angleWithY = angleWithY * 180 / Math.PI;
 		
-		if (Global.zoneZipline[0] > Global.zoneZiplineO[0])
+		if (Global.zoneZipline[0] < Global.zoneZiplineO[0])
 			angleWithY *= -1;
 		
-		if (Global.angle == 90) {
-			if (angleWithY!=0) { // different X
-				turn(angleWithY, false);
-			}
-		} else {
-			turn(90+angleWithY, false);
+		if (angleWithY!=0) { // different X
+			turn(angleWithY, false);
 		}
 		
 		move(Global.ZIPLINE_LENGTH, false);
@@ -160,30 +156,62 @@ public class Navigation extends Thread {
 		// TODO
 	}
 
-	public void setStartingCorner() {
-		switch (Global.startingCorner) {
-		case 0:
-			Global.X = 1;
-			Global.Y = 1;
-			Global.angle = 0;
-			break;
-		case 1:
-			Global.X = 12;
-			Global.Y = 0;
-			Global.angle = 90;
-			break;
-		case 2:
-			Global.X = 11;
-			Global.Y = 11;
-			Global.angle = 180;
-			break;
-		case 3:
-			Global.X = 1;
-			Global.Y = 11;
-			Global.angle = 270;
-		}
-	}
+	
+	/**
+	 * Make the robot travel to a given X and Y position. It first moves along the X
+	 * axis, then along the Y axis. It also performs wall correction to assure the
+	 * robot is moving in a straight line. It uses the left color sensor to detect
+	 * lines as it's moving.
+	 * 
+	 * @param x
+	 *            The target x coordinate
+	 * @param y
+	 *            The target y coordinate
+	 */
+	public void travelTo(int x, int y) throws Exception {
+		// activate required threads
+		Global.leftColorSensorSwitch = true;
+		Thread.sleep(Global.THREAD_SLEEP_TIME);
 
+		if (Global.angle == 90 || Global.angle == 270) {
+			travelY(y);
+			
+			// turn to the correct direction using the black lines
+			turn(-Global.KEEP_MOVING, true);
+			Thread.sleep(Global.THREAD_SLEEP_TIME);
+			Global.BlackLineDetected = false;
+			while (!Global.BlackLineDetected) {}
+			turn(Global.COLOR_SENSOR_OFFSET_ANGLE, false);
+			
+			// wall correction
+			move(-30, false);
+			
+			travelX(x);
+			turn(90, false);
+		} else {
+			travelX(x);
+			
+			// turn to the correct direction using the black lines
+			turn(-Global.KEEP_MOVING, true);
+			Thread.sleep(Global.THREAD_SLEEP_TIME);
+			Global.BlackLineDetected = false;
+			while (!Global.BlackLineDetected) {}
+			turn(Global.COLOR_SENSOR_OFFSET_ANGLE, false);
+			
+			// wall correction
+			move(-30, false);
+			
+			travelY(y);
+		}
+
+		Global.leftColorSensorSwitch = false;
+		
+		Global.firstLine = "X: " + Global.X;
+		Global.secondLine = "Y: " + Global.Y;
+		Global.thirdLine = "";
+		Global.forthLine = "";
+	}
+	
 	public void travelX(int x) throws Exception {
 		// move across x
 		Global.thirdLine = "travel x";
@@ -267,71 +295,6 @@ public class Navigation extends Thread {
 		move(-Global.ROBOT_LENGTH, false);// reposition the robot the the center
 	}
 
-	/**
-	 * Make the robot travel to a given X and Y position. It first moves along the X
-	 * axis, then along the Y axis. It also performs wall correction to assure the
-	 * robot is moving in a straight line. It uses the left color sensor to detect
-	 * lines as it's moving.
-	 * 
-	 * @param x
-	 *            The target x coordinate
-	 * @param y
-	 *            The target y coordinate
-	 */
-	public void travelTo(int x, int y) throws Exception {
-		// activate required threads
-		Global.leftColorSensorSwitch = true;
-		Thread.sleep(Global.THREAD_SLEEP_TIME);
-
-		if (Global.angle == 90 || Global.angle == 270) {
-			travelY(y);
-			
-			// turn to the correct direction using the black lines
-			turn(-Global.KEEP_MOVING, true);
-			Thread.sleep(Global.THREAD_SLEEP_TIME);
-			Global.BlackLineDetected = false;
-			while (!Global.BlackLineDetected) {}
-			turn(Global.COLOR_SENSOR_OFFSET_ANGLE, false);
-			
-			// wall correction
-			move(-30, false);
-			move(Global.KEEP_MOVING, true);
-			while(!Global.BlackLineDetected) {}
-			move(-Global.ROBOT_LENGTH, false);
-			
-			travelX(x);
-		} else {
-			travelX(x);
-			
-			// turn to the correct direction using the black lines
-			turn(-Global.KEEP_MOVING, true);
-			Thread.sleep(Global.THREAD_SLEEP_TIME);
-			Global.BlackLineDetected = false;
-			while (!Global.BlackLineDetected) {}
-			turn(Global.COLOR_SENSOR_OFFSET_ANGLE, false);
-			
-			// wall correction
-			move(-30, false);
-			move(Global.KEEP_MOVING, true);
-			while(!Global.BlackLineDetected) {}
-			move(-Global.ROBOT_LENGTH, false);
-			
-			travelY(y);
-		}
-
-		// turn and rescan the angle
-		turn(90, false);
-		Global.leftColorSensorSwitch = false;
-		
-		Global.firstLine = "X: " + Global.X;
-		Global.secondLine = "Y: " + Global.Y;
-		Global.thirdLine = "";
-		Global.forthLine = "";
-		
-		// wall correction
-		// move(-30,false);
-		// move(30,false);
-	}
 
 	/**
 	 * Converts an angle in degrees that the robot has to turn to an angle in
@@ -538,5 +501,30 @@ public class Navigation extends Thread {
 		// reset coordinates
 		Global.angle = 0;
 		Global.secondLine = "";
+	}
+	
+	
+	public void setStartingCorner() {
+		switch (Global.startingCorner) {
+		case 0:
+			Global.X = 0;
+			Global.Y = 0;
+			Global.angle = 0;
+			break;
+		case 1:
+			Global.X = 8;
+			Global.Y = 0;
+			Global.angle = 90;
+			break;
+		case 2:
+			Global.X = 12;
+			Global.Y = 12;
+			Global.angle = 180;
+			break;
+		case 3:
+			Global.X = 0;
+			Global.Y = 12;
+			Global.angle = 270;
+		}
 	}
 }

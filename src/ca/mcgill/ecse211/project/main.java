@@ -343,7 +343,7 @@ public class main {
         Map<String, Integer> data = new HashMap<String, Integer>();
 	    data.put("RedTeam", 1);
 		data.put("RedCorner", 3);
-		data.put("OR", 1);          // Color of red flag
+		data.put("OR", 1);
 		data.put("Red_LL_x", 0);
 		data.put("Red_LL_y", 7);
 		data.put("Red_UR_x", 8);
@@ -352,13 +352,13 @@ public class main {
 		data.put("SR_LL_y", 9);
 		data.put("SR_UR_x", 2);
 		data.put("SR_UR_y", 11);
-		data.put("ZC_R_x", 4);
-		data.put("ZC_R_y", 9);
-		data.put("ZO_R_x", 3);
-		data.put("ZO_R_y", 10);
+		data.put("ZC_R_x", 6);			//demo
+		data.put("ZC_R_y", 6);			//demo
+		data.put("ZO_R_x", 6);			//demo
+		data.put("ZO_R_y", 7); 			//demo
 		
-		data.put("GreenCorner", 1);
-		data.put("OG", 2);
+		data.put("GreenCorner", 0); 	//demo
+		data.put("OG", 1);
 		data.put("Green_LL_x", 4);
 		data.put("Green_LL_y", 0);
 		data.put("Green_UR_x", 12);
@@ -367,10 +367,10 @@ public class main {
 		data.put("SG_LL_y", 1);
 		data.put("SG_UR_x", 11);
 		data.put("SG_UR_y", 2);
-		data.put("ZC_G_x", 9);
-		data.put("ZC_G_y", 3);
-		data.put("ZO_G_x", 10);
-		data.put("ZO_G_y", 2);
+		data.put("ZC_G_x", 2); 			//demo
+		data.put("ZC_G_y", 2); 			//demo
+		data.put("ZO_G_x", 2); 			//demo
+		data.put("ZO_G_y", 1); 			//demo
 		
 		data.put("SH_LL_x", 8);
 		data.put("SH_LL_y", 9);

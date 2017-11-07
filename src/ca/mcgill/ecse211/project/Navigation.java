@@ -27,8 +27,6 @@ public class Navigation extends Thread {
 			fallingEdge();
 			lightPosition();
 			setStartingCorner();
-			
-			// Wall correction
 
 			// Travel to transit location
 			travelToTransit(true);	
@@ -62,42 +60,7 @@ public class Navigation extends Thread {
 		}
 	}
 
-	/**
-	 * Travels the zipline. The robot has to be at the position specified by
-	 * {@link Global.zoneZipline0} or {@link Global.oppZipline0} before calling this
-	 * method. The robot then aligns itself with the zipline and traverse it.
-	 * 
-	 * @param zone
-	 *            True means we traverse the zipline from our starting zone, False
-	 *            means from the opponent's zone
-	 * @throws Exception
-	 */
-	public void travelZipline() throws Exception {
-		/*
-		 * TODO move from Global.zipline0 (coordinate just before the zipline) to
-		 * Global.zipline (actual coordinates of the zipline
-		 */
-		
-		Global.ziplineMotor.setSpeed(Global.MOVING_SPEED);
-		Global.ziplineMotor.backward();
-		
-		double dx = Math.abs(Global.zoneZipline[0] - Global.zoneZiplineO[0]);
-		double dy = Math.abs(Global.zoneZipline[1] - Global.zoneZiplineO[1]);
-		double angleWithY = Math.atan(dx/dy);
-		angleWithY = angleWithY * 180 / Math.PI;
-		
-		if (Global.zoneZipline[0] < Global.zoneZiplineO[0])
-			angleWithY *= -1;
-		
-		if (angleWithY!=0) { // different X
-			turn(angleWithY, false);
-		}
-		
-		move(Global.ZIPLINE_LENGTH, false);
-		Global.ziplineMotor.stop();
-		
-	}
-
+	
 	/**
 	 * Travels to the right transit point (zipline or water) depending on which zone
 	 * the robot is currently in. This method make sure that we do not have to avoid
@@ -137,12 +100,44 @@ public class Navigation extends Thread {
 		} catch (Exception e) {
 		}
 	}
+	
+	
+	/**
+	 * Travels the zipline. The robot has to be at the position specified by
+	 * {@link Global.zoneZipline0} or {@link Global.oppZipline0} before calling this
+	 * method. The robot then aligns itself with the zipline and traverse it.
+	 * 
+	 * @throws Exception
+	 */
+	public void travelZipline() throws Exception {
+		/*
+		 * TODO move from Global.zipline0 (coordinate just before the zipline) to
+		 * Global.zipline (actual coordinates of the zipline
+		 */
+		
+		Global.ziplineMotor.setSpeed(Global.MOVING_SPEED);
+		Global.ziplineMotor.backward();
+		
+		double dx = Math.abs(Global.zoneZipline[0] - Global.zoneZiplineO[0]);
+		double dy = Math.abs(Global.zoneZipline[1] - Global.zoneZiplineO[1]);
+		double angleWithY = Math.atan(dx/dy);
+		angleWithY = angleWithY * 180 / Math.PI;
+		
+		if (Global.zoneZipline[0] < Global.zoneZiplineO[0])
+			angleWithY *= -1;
+		
+		if (angleWithY!=0) { // different X
+			turn(angleWithY, false);
+		}
+		
+		move(Global.ZIPLINE_LENGTH, false);
+		Global.ziplineMotor.stop();
+		
+	}
 
 	/**
 	 * Traverse the shallow water. The robot always traverse water from the red zone
 	 * 
-	 * @param zone
-	 *            True if the robot is in it's zone, False otherwise
 	 */
 	public void travelWater() {
 	}
@@ -212,6 +207,14 @@ public class Navigation extends Thread {
 		Global.forthLine = "";
 	}
 	
+	/**
+	 * Moves the robot along the X-axis only.
+	 * Assumes that {@link Global.X} is set the 
+	 * the right value before the execution. It travels 
+	 * by counting the lines.
+	 * @param x 	The x coordinate of the destination
+	 * @throws Exception
+	 */
 	public void travelX(int x) throws Exception {
 		// move across x
 		Global.thirdLine = "travel x";
@@ -254,6 +257,14 @@ public class Navigation extends Thread {
 		}
 	}
 
+	/**
+	 * Moves the robot along the Y-axis only.
+	 * Assumes that {@link Global.Y} is set the 
+	 * the right value before the execution. It travels 
+	 * by counting the lines.
+	 * @param y 	The y coordinate of the destination
+	 * @throws Exception
+	 */
 	public void travelY(int y) throws Exception {
 		// update display
 		Global.thirdLine = "travel y;";
@@ -503,7 +514,12 @@ public class Navigation extends Thread {
 		Global.secondLine = "";
 	}
 	
-	
+	/**
+	 * Set the X, Y and angle coordinates
+	 * of the robot depending on the corner
+	 * it starts in. To be used after the initial
+	 * localization.
+	 */
 	public void setStartingCorner() {
 		switch (Global.startingCorner) {
 		case 0:

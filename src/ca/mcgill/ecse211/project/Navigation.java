@@ -24,19 +24,21 @@ public class Navigation extends Thread {
 	public void run() {
 		try {
 			// initial positioning
-			fallingEdge();
-			lightPosition();
-			setStartingCorner();
+			//fallingEdge();
+			//lightPosition();
+			//setStartingCorner();
 
 			// Travel to transit location
-			travelToTransit(true);	
+			//travelToTransit(true);	
 			
 			// Cross transit
 			if (Global.teamColor == Global.TeamColor.GREEN)
 				travelZipline();
 			else
 				travelWater();
-
+			
+			afterZiplineLocalization();
+			
 			Button.waitForAnyPress();
 			System.exit(0);
 			
@@ -130,7 +132,14 @@ public class Navigation extends Thread {
 			turn(angleWithY, false);
 		}
 		
-		move(Global.ZIPLINE_LENGTH, false);
+		move(Global.ZIPLINE_LENGTH, true);
+		Thread.sleep(3000);
+		Global.leftMotor.stop();
+		Global.rightMotor.stop();
+		Global.leftMotor.flt();
+		Global.rightMotor.flt();
+		
+		Thread.sleep(Global.ZIPLINE_TIME);
 		Global.ziplineMotor.stop();
 		
 	}
@@ -305,7 +314,43 @@ public class Navigation extends Thread {
 		}
 		move(-Global.ROBOT_LENGTH, false);// reposition the robot the the center
 	}
-
+	
+	
+	public void afterZiplineLocalization() throws Exception {	
+		// start left color sensor
+		Global.leftColorSensorSwitch = true;
+		Thread.sleep(Global.THREAD_SLEEP_TIME);
+		
+		//Gets off the zipline
+		if(Global.zoneZiplineO[0] != Global.oppZiplineO[0]) {
+			move(Global.SQUARE_DIAGONAL, false);
+		}
+		else {
+			move(Global.SQUARE_LENGTH, false);
+		}
+		
+		//Turns away from the red zone's back wall
+		if(Global.zoneZipline[0] > Global.oppZipline[0]) {
+			turn(135, false);
+		}
+		else if(Global.zoneZipline[0] < Global.oppZipline[0]) {
+			turn(-135, false);
+		}
+		else {
+			turn(180, false);
+		}
+		
+		//Wall correction
+		move(-45, false);
+		move(Global.KEEP_MOVING, true);
+		while (!Global.BlackLineDetected) {}
+		move(-Global.ROBOT_LENGTH, false);
+		
+		Global.X = Global.oppZiplineO[0];
+		Global.Y = 8;
+		Global.angle = 270;
+}
+	
 
 	/**
 	 * Converts an angle in degrees that the robot has to turn to an angle in

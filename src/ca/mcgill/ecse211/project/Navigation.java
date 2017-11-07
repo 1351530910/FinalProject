@@ -15,7 +15,15 @@ import lejos.hardware.Button;
 */
 public class Navigation extends Thread {
     
+	//this is the current robot position
+	boolean redteam;
+	
 	public Navigation() {
+		if (Global.teamColor==Global.TeamColor.RED) {
+			redteam = true;
+		}else {
+			redteam = false;
+		}
 	}
 
     /**
@@ -24,6 +32,17 @@ public class Navigation extends Thread {
     */
 	public void run() {
 		try {
+			travelToTransit();
+			travelWater();
+			findFlag();
+			travelToTransit();
+			travelWater();
+			if (redteam) {
+				travelTo(0, 12);
+			}else {
+				travelTo(12, 0);
+			}
+			
 			Button.waitForAnyPress();
 			System.exit(0);
 		} catch (Exception e) {
@@ -37,11 +56,9 @@ public class Navigation extends Thread {
 	 * calling this method. The robot then aligns itself with the zipline
 	 * and traverse it.
 	 * 
-	 * @param 	zone 		True means we traverse the zipline from our starting
-	 * 						zone, False means from the opponent's zone
 	 * @throws 	Exception
 	 */
-	public void travelZipLine(boolean zone) throws Exception {
+	public void travelZipLine() throws Exception {
 		/* TODO 	move from Global.zipline0 (coordinate just before the zipline)
 		   			to Global.zipline (actual coordinates of the zipline
 		*/
@@ -51,20 +68,21 @@ public class Navigation extends Thread {
 	 * Travels to the right transit point (zipline or water)
 	 * depending on which zone the robot is currently in.
 	 * 
-	 * @param zone 		True means we are in our own zone, False means
-	 * 					we are in the opponent's
 	 */
-	public void travelToTransit(boolean zone) {
-		// TODO
+	public void travelToTransit() {
+		if (redteam) {
+			if (redteam) {
+				
+			}
+		}
 	}
 	
 	
 	/**
 	 * Traverse the shallow water.
 	 * 
-	 * @param zone 	True if the robot is in it's zone, False otherwise
 	 */
-	public void travelWater(boolean zone) {
+	public void travelWater() {
 		// TODO
 	}
 	

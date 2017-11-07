@@ -179,8 +179,6 @@ public class main {
 			// put your logic here if you don't want to use the wifi (eg. for testing)
 		}
 		
-		Global.firstLine = "Initializing";
-		
 		// initialize us sensor
 		Global.usPort = LocalEV3.get().getPort("S1");
 		try {

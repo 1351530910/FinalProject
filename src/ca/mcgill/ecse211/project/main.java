@@ -1,9 +1,9 @@
 package ca.mcgill.ecse211.project;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import ca.mcgill.ecse211.WiFiClient.WifiConnection;
-
 import lejos.hardware.Button;
 import lejos.hardware.ev3.LocalEV3;
 import lejos.hardware.motor.EV3LargeRegulatedMotor;
@@ -51,7 +51,11 @@ public class main {
 		public static boolean usSwitch = false;
 		public static boolean leftColorSensorSwitch = false;
 		public static boolean frontColorSensorSwitch = false;
+		public static boolean odometerSwitch = false;
 		public static boolean turning = false;
+		
+		// odometer
+		public static Odometer odometerThread;
 		
 		// us sensor
 		public static UltrasonicSensor usSensorThread;
@@ -107,10 +111,10 @@ public class main {
 		
 		// positioning
 		public static int X, Y = 0;
-		public static double angle = 90;
+		public static double angle = 0;
 		
 		// wifi settings
-		public static final boolean USE_WIFI = true;
+		public static final boolean USE_WIFI = false;
 		public static final String SERVER_IP = "192.168.2.3";
 		public static final int TEAM_NUMBER = 18;
 		public static final boolean WIFI_DEBUG = false;
@@ -176,8 +180,9 @@ public class main {
 			Global.firstLine = "Parsing game data";
 			parseGameData(gameData);
 		} else {
-			// put your logic here if you don't want to use the wifi (eg. for testing)
-		}
+		    // Update the values in generateTestData() for your specific test
+            parseGameData(generateTestData());
+        }
 		
 		Global.firstLine = "Initializing";
 		
@@ -206,11 +211,28 @@ public class main {
 		Global.usSensorThread = new UltrasonicSensor();
 		Global.leftColorSensorThread  = new ColorSensor(0);
 		Global.frontColorSensorThread = new ColorSensor(1);
+		Global.odometerThread = new Odometer();
 		
+		// get a starting value for left color sensor
+		Global.secondLine = "Start left sensor ...";
+		Button.waitForAnyPress();
+		Global.leftColorSensorThread.start();
+		try {
+			Thread.sleep(Global.THREAD_SLEEP_TIME);
+		} catch (Exception e) {}		
+		Global.leftColorSensorSwitch = true;
+		while(Global.leftColor==0) {}
+		Global.colorThreshhold = (float)(Global.leftColor *0.7);
+		Global.leftColorSensorSwitch = false;
+		
+		// start main thread
+		Global.firstLine = "";
+		Global.secondLine = "";
 		Navigation mainthread = new Navigation();
 		mainthread.start();
 		
-		
+	    Button.waitForAnyPress();
+        System.exit(0);
 	}
 	
     /**
@@ -304,6 +326,61 @@ public class main {
      * @see 			main#parseGameData 
     */
 	private static int intVal(Object obj) {
-		return ((Long) obj).intValue();
+		//return ((Long) obj).intValue();
+		return (int) obj;
 	}
+    
+
+    /**
+     * Generate a Map with the same key as one
+     * we would get from the server. Use this when
+     * you don't want to get parameters from the server,
+     * when testing for example.
+     *
+     * @return  A {@link Map} containing the data for a game 
+    */
+    private static Map<String, Integer> generateTestData() {
+        Map<String, Integer> data = new HashMap<String, Integer>();
+	    data.put("RedTeam", 1);
+		data.put("RedCorner", 3);
+		data.put("OR", 1);          // Color of red flag
+		data.put("Red_LL_x", 0);
+		data.put("Red_LL_y", 7);
+		data.put("Red_UR_x", 8);
+	    data.put("Red_UR_y", 12);
+		data.put("SR_LL_x", 1);
+		data.put("SR_LL_y", 9);
+		data.put("SR_UR_x", 2);
+		data.put("SR_UR_y", 11);
+		data.put("ZC_R_x", 4);
+		data.put("ZC_R_y", 9);
+		data.put("ZO_R_x", 3);
+		data.put("ZO_R_y", 10);
+		
+		data.put("GreenCorner", 1);
+		data.put("OG", 2);
+		data.put("Green_LL_x", 4);
+		data.put("Green_LL_y", 0);
+		data.put("Green_UR_x", 12);
+		data.put("Green_UR_y", 5);
+		data.put("SG_LL_x", 9);
+		data.put("SG_LL_y", 1);
+		data.put("SG_UR_x", 11);
+		data.put("SG_UR_y", 2);
+		data.put("ZC_G_x", 9);
+		data.put("ZC_G_y", 3);
+		data.put("ZO_G_x", 10);
+		data.put("ZO_G_y", 2);
+		
+		data.put("SH_LL_x", 8);
+		data.put("SH_LL_y", 9);
+		data.put("SH_UR_x", 11);
+		data.put("SH_UR_y", 10);
+		data.put("SV_LL_x", 10);
+		data.put("SV_LL_y", 5);
+		data.put("SV_UR_x", 11);
+		data.put("SV_UR_y", 10);
+         
+        return data;
+    }
 }

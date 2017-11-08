@@ -39,6 +39,9 @@ public class Navigation extends Thread {
 			
 			afterZiplineLocalization();
 			
+			Global.usSwitch = true;
+			Global.odometerSwitch = true;
+			
 			fallingEdge();
 			lightPosition();
 			
@@ -400,16 +403,18 @@ public class Navigation extends Thread {
 		}
 		else {
 			if(Global.zoneZipline[0] >=4) {
-				turn(90, false);
+				turn(-90, false);
+				Global.angle = 0;
 			}
 			else {
-				turn(-90, false);
+				turn(90, false);
+				Global.angle = 180;
 			}
 			move(125, false);
-			move(-Global.KEEP_MOVING, true);
-			while (!Global.BlackLineDetected) {}
-			move(-Global.ROBOT_LENGTH, false);
 		}
+		move(-Global.KEEP_MOVING, true);
+		while (!Global.BlackLineDetected) {}
+		move(-Global.ROBOT_LENGTH, false);
 	}
 	
 

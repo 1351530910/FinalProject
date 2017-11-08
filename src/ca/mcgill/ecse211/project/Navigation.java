@@ -24,12 +24,12 @@ public class Navigation extends Thread {
 	public void run() {
 		try {
 			// initial positioning
-			//fallingEdge();
-			//lightPosition();
-			//setStartingCorner();
+			fallingEdge();
+			lightPosition();
+			setStartingCorner();
 
 			// Travel to transit location
-			//travelToTransit(true);	
+			travelToTransit(true);	
 			
 			// Cross transit
 			if (Global.teamColor == Global.TeamColor.GREEN)
@@ -38,6 +38,9 @@ public class Navigation extends Thread {
 				travelWater();
 			
 			afterZiplineLocalization();
+			
+			fallingEdge();
+			lightPosition();
 			
 			Button.waitForAnyPress();
 			System.exit(0);
@@ -133,7 +136,7 @@ public class Navigation extends Thread {
 		}
 		
 		move(Global.ZIPLINE_LENGTH, true);
-		Thread.sleep(3000);
+		Thread.sleep(9000);
 		Global.leftMotor.stop();
 		Global.rightMotor.stop();
 		Global.leftMotor.flt();
@@ -158,6 +161,40 @@ public class Navigation extends Thread {
 	 */
 	public void findFlag() {
 		// TODO
+	}
+	
+	public void relocalize() throws Exception {
+		
+		
+		//Gets off the zipline
+		if(Global.zoneZiplineO[0] != Global.oppZiplineO[0]) {
+			move(Global.SQUARE_DIAGONAL, false);
+		}
+		else {
+			move(Global.SQUARE_LENGTH, false);
+		}
+		
+		//corrects X and Y coordinates
+		Global.X = Global.oppZiplineO[0];
+		
+		//Turns away from the red zone's back wall
+		if(Global.zoneZipline[0] > Global.oppZipline[0]) {
+			turn(135, false);
+		}
+		else if(Global.zoneZipline[0] < Global.oppZipline[0]) {
+			turn(-135, false);
+		}
+		else {
+			turn(180, false);
+		}
+		
+		//Wall correction
+		move(-65, false);
+		
+		move(Global.ROBOT_LENGTH, false);
+		
+		Global.Y = 7;
+		
 	}
 
 	
@@ -347,9 +384,33 @@ public class Navigation extends Thread {
 		move(-Global.ROBOT_LENGTH, false);
 		
 		Global.X = Global.oppZiplineO[0];
-		Global.Y = 8;
+		Global.Y = 7;
 		Global.angle = 270;
-}
+		
+		
+		if(Global.zoneZipline[0] > Global.oppZipline[0] && Global.oppZiplineO[0] != 1) {
+			turn(-90, false);
+			travelTo(1, 7);
+			Global.angle = 180;
+		}
+		else if(Global.zoneZipline[0] < Global.oppZipline[0] && Global.oppZiplineO[0] != 7) {
+			turn(90, false);
+			travelTo(7,7);
+			Global.angle = 0;
+		}
+		else {
+			if(Global.zoneZipline[0] >=4) {
+				turn(90, false);
+			}
+			else {
+				turn(-90, false);
+			}
+			move(125, false);
+			move(-Global.KEEP_MOVING, true);
+			while (!Global.BlackLineDetected) {}
+			move(-Global.ROBOT_LENGTH, false);
+		}
+	}
 	
 
 	/**

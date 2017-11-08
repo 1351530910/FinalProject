@@ -108,7 +108,7 @@ public class main {
 		public static final int ZIPLINE_LENGTH = 250;
 		public static final int FALLING_EDGE_ANGLE = -65;
 		public static final int USThreshhold = 40;
-		public static final int ZIPLINE_TIME = 12000;
+		public static final int ZIPLINE_TIME = 45000;
 		public static final int SQUARE_DIAGONAL = 43;
 		
 		// positioning
@@ -354,12 +354,12 @@ public class main {
 		data.put("SR_LL_y", 9);
 		data.put("SR_UR_x", 2);
 		data.put("SR_UR_y", 11);
-		data.put("ZC_R_x", 6);			//demo
+		data.put("ZC_R_x", 5);			//demo
 		data.put("ZC_R_y", 6);			//demo
-		data.put("ZO_R_x", 6);			//demo
+		data.put("ZO_R_x", 5);			//demo
 		data.put("ZO_R_y", 7); 			//demo
 		
-		data.put("GreenCorner", 0); 	//demo
+		data.put("GreenCorner", 1); 	//demo
 		data.put("OG", 1);
 		data.put("Green_LL_x", 4);
 		data.put("Green_LL_y", 0);
@@ -369,9 +369,9 @@ public class main {
 		data.put("SG_LL_y", 1);
 		data.put("SG_UR_x", 11);
 		data.put("SG_UR_y", 2);
-		data.put("ZC_G_x", 2); 			//demo
+		data.put("ZC_G_x", 5); 			//demo
 		data.put("ZC_G_y", 2); 			//demo
-		data.put("ZO_G_x", 2); 			//demo
+		data.put("ZO_G_x", 5); 			//demo
 		data.put("ZO_G_y", 1); 			//demo
 		
 		data.put("SH_LL_x", 8);

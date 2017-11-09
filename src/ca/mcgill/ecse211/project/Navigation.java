@@ -148,9 +148,24 @@ public class Navigation extends Thread {
 
 	/**
 	 * Traverse the shallow water. The robot always traverse water from the red zone
+	 * @throws Exception 
 	 * 
+	 *
 	 */
-	public void travelWater() {
+	public void travelWater() throws Exception {
+		travelTo(Global.shallowVLLx, Global.shallowVLLy-1);
+		move(Global.ROBOT_LENGTH, false);
+		
+		turn(-90, false);
+		
+		travelY(Global.shallowHLLy);
+		move(Global.ROBOT_LENGTH, false);
+		
+		turn(90, false);
+		move(-Global.SQUARE_LENGTH, false);
+		
+		travelX(Global.shallowHLLx-1);		
+		
 	}
 
 	/**
@@ -159,7 +174,7 @@ public class Navigation extends Thread {
 	 * times and the method returns.
 	 */
 	public void findFlag() {
-		// TODO
+		
 	}
 	
 	/**
@@ -188,9 +203,6 @@ public class Navigation extends Thread {
 			while (!Global.BlackLineDetected) {}
 			turn(Global.COLOR_SENSOR_OFFSET_ANGLE, false);
 			
-			// wall correction
-			move(-30, false);
-			
 			travelX(x);
 			turn(90, false);
 		} else {
@@ -203,12 +215,9 @@ public class Navigation extends Thread {
 			while (!Global.BlackLineDetected) {}
 			turn(Global.COLOR_SENSOR_OFFSET_ANGLE, false);
 			
-			// wall correction
-			move(-30, false);
-			
 			travelY(y);
 		}
-
+		
 		Global.leftColorSensorSwitch = false;
 		
 		Global.firstLine = "X: " + Global.X;

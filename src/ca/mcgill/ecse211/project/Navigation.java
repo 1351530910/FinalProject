@@ -37,8 +37,6 @@ public class Navigation extends Thread {
 			else
 				travelWater();
 			
-			afterZiplineLocalization();
-			
 			Global.usSwitch = true;
 			Global.odometerSwitch = true;
 			
@@ -385,6 +383,7 @@ public class Navigation extends Thread {
 		move(-Global.KEEP_MOVING, true);
 		while (!Global.BlackLineDetected) {}
 		move(-Global.ROBOT_LENGTH, false);
+		afterZiplineLocalization();
 	}
 	
 

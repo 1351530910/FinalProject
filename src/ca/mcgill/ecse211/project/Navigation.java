@@ -1,5 +1,8 @@
 package ca.mcgill.ecse211.project;
 
+import com.sun.org.apache.bcel.internal.generic.GOTO;
+import com.sun.xml.internal.ws.org.objectweb.asm.Label;
+
 import ca.mcgill.ecse211.project.main.Global;
 import lejos.hardware.Button;
 
@@ -170,9 +173,38 @@ public class Navigation extends Thread {
 	 * Makes the robot search the opponent's zone for the flag. It uses the
 	 * ultrasonic sensor and both color sensors. When it finds the flag, it beeps 3
 	 * times and the method returns.
+	 * @throws Exception 
 	 */
-	public void findFlag() {
+	public void findFlag() throws Exception {
+		Global.usSwitch = true;
+		Global.frontColorSensorSwitch =true;
+		travelTo(Global.searchLL[0],Global.searchLL[1]);
 		
+		boolean findflag = true;
+		int count = 0;
+		
+		//turn and scan for flag
+		while (findflag) {
+			count++;
+			turn(-5, false);
+			if (Global.ObstacleDistance<=40) {
+				Global.rightMotor.stop();
+				Global.leftMotor.stop();
+				move(Global.SQUARE_LENGTH*1.5, false);
+				if (Global.frontColorID==Global.flagColor) {
+					Button.waitForAnyPress();
+					move(-Global.SQUARE_LENGTH*1.5, false);
+				}
+				else {
+					move(-Global.SQUARE_LENGTH*1.5, false);
+				}
+			}
+		}
+		
+		//return to initial position
+		while(count-->0) {
+			turn(5, false);
+		}
 	}
 	
 	/**
@@ -180,7 +212,7 @@ public class Navigation extends Thread {
 	 * axis, then along the Y axis. It also performs wall correction to assure the
 	 * robot is moving in a straight line. It uses the left color sensor to detect
 	 * lines as it's moving.
-	 * 
+	 * @throws Exception 
 	 * @param x
 	 *            The target x coordinate
 	 * @param y

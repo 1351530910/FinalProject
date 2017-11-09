@@ -118,10 +118,6 @@ public class Navigation extends Thread {
 	 * @throws Exception
 	 */
 	public void travelZipline() throws Exception {
-		/*
-		 * TODO move from Global.zipline0 (coordinate just before the zipline) to
-		 * Global.zipline (actual coordinates of the zipline
-		 */
 		
 		Global.ziplineMotor.setSpeed(Global.MOVING_SPEED);
 		Global.ziplineMotor.backward();
@@ -165,41 +161,6 @@ public class Navigation extends Thread {
 	public void findFlag() {
 		// TODO
 	}
-	
-	public void relocalize() throws Exception {
-		
-		
-		//Gets off the zipline
-		if(Global.zoneZiplineO[0] != Global.oppZiplineO[0]) {
-			move(Global.SQUARE_DIAGONAL, false);
-		}
-		else {
-			move(Global.SQUARE_LENGTH, false);
-		}
-		
-		//corrects X and Y coordinates
-		Global.X = Global.oppZiplineO[0];
-		
-		//Turns away from the red zone's back wall
-		if(Global.zoneZipline[0] > Global.oppZipline[0]) {
-			turn(135, false);
-		}
-		else if(Global.zoneZipline[0] < Global.oppZipline[0]) {
-			turn(-135, false);
-		}
-		else {
-			turn(180, false);
-		}
-		
-		//Wall correction
-		move(-65, false);
-		
-		move(Global.ROBOT_LENGTH, false);
-		
-		Global.Y = 7;
-		
-	}
-
 	
 	/**
 	 * Make the robot travel to a given X and Y position. It first moves along the X

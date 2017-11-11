@@ -107,6 +107,7 @@ public class main {
 		public static final int FALLING_EDGE_ANGLE = -65;
 		public static final int USThreshhold = 40;
 		public static final int ZIPLINE_TIME = 45000;
+		public static final int ZIPLINE0_TIME = 9000;
 		public static final int SQUARE_DIAGONAL = 43;
 		
 		// positioning

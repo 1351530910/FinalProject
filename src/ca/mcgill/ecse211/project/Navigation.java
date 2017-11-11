@@ -17,9 +17,12 @@ public class Navigation extends Thread {
 	private double convertAngleConstant;
 	private double convertDistanceConstant;
 	
+	private double angleZipline;
+	
 	public Navigation() {
 		convertDistanceConstant = (180.0 / (Math.PI * Global.WHEEL_RADIUS));
 		convertAngleConstant = convertDistanceConstant*Math.PI * Global.TRACK  / 360.0;
+		angleZipline = 0.0;
 	}
 
 	/**
@@ -30,27 +33,34 @@ public class Navigation extends Thread {
 		try {
 			// initial positioning
 			fallingEdge();
-			lightPosition();
+			lightPosition(true);
 			setStartingCorner();
 
 			// Travel to transit location
 			travelToTransit(true);	
 			
 			// Cross transit
-			if (Global.teamColor == Global.TeamColor.GREEN)
+			if (Global.teamColor == Global.TeamColor.GREEN) {
 				travelZipline();
+				afterZiplineLocalization2();
+			}
 			else
 				travelWater();
 			
-			Global.usSwitch = true;
-			Global.odometerSwitch = true;
+			Global.firstLine = "X: " + Global.X;
+			Global.secondLine = "Y: " + Global.Y;
+			Global.thirdLine = "Angle: " + Global.angle;
+			Global.forthLine = "";
+			Global.fifthLine = "";
+			Button.waitForAnyPress();
 			
-			fallingEdge();
-			lightPosition();
+			// BETA: go to search zone.
+			travelTo(Global.searchLL[0], Global.searchLL[1]);
 			
 			Button.waitForAnyPress();
 			System.exit(0);
 			
+			/*
 			// find the flag
 			findFlag();
 
@@ -66,6 +76,7 @@ public class Navigation extends Thread {
 			// Done
 			Button.waitForAnyPress();
 			System.exit(0);
+			*/
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -86,30 +97,21 @@ public class Navigation extends Thread {
 			// first transit
 			if (zone) {
 				// go to zoneZipline0
-				if (Global.teamColor == Global.TeamColor.GREEN) {
+				if (Global.teamColor == Global.TeamColor.GREEN)
 					travelTo(Global.zoneZiplineO[0], Global.zoneZiplineO[1]);
-					// reset angle
-					if (Global.startingCorner == 1) 
-						Global.angle = 90;
-					else // corner 0
-						Global.angle = 0;
-				}
 				// go to shallowHLL
-				else {
+				else
 					travelTo(Global.shallowHLLx, Global.shallowHLLy);
-				}
 			}
 
 			// second transit
 			else {
-				if (Global.teamColor == Global.TeamColor.GREEN) {
+				if (Global.teamColor == Global.TeamColor.GREEN)
 					travelTo(Global.shallowHLLx, Global.shallowHLLy);
-				} else {
+				else
 					travelTo(Global.oppZiplineO[0], Global.oppZiplineO[1]);
-				}
 			}
-		} catch (Exception e) {
-		}
+		} catch (Exception e) {}
 	}
 	
 	
@@ -122,23 +124,44 @@ public class Navigation extends Thread {
 	 */
 	public void travelZipline() throws Exception {
 		
-		Global.ziplineMotor.setSpeed(Global.MOVING_SPEED);
-		Global.ziplineMotor.backward();
+		double dx = Global.zoneZipline[0] - Global.zoneZiplineO[0];
+		double dy = Global.zoneZipline[1] - Global.zoneZiplineO[1];
 		
-		double dx = Math.abs(Global.zoneZipline[0] - Global.zoneZiplineO[0]);
-		double dy = Math.abs(Global.zoneZipline[1] - Global.zoneZiplineO[1]);
-		double angleWithY = Math.atan(dx/dy);
-		angleWithY = angleWithY * 180 / Math.PI;
-		
-		if (Global.zoneZipline[0] < Global.zoneZiplineO[0])
-			angleWithY *= -1;
-		
-		if (angleWithY!=0) { // different X
-			turn(angleWithY, false);
+		// calculate the orientation of the zipline
+		if (dy > 0) {
+			double angleWithY = Math.atan(Math.abs(dx)/dy) * 180 / Math.PI;
+			if (dx > 0)
+				this.angleZipline = 90.0 - angleWithY;
+			else
+				this.angleZipline = 90.0 + angleWithY;
+		} else if (dy < 0) {
+			dy *= -1;
+			double angleWithY = Math.atan(Math.abs(dx)/dy) * 180 / Math.PI;
+			if (dx > 0)
+				this.angleZipline = 270 + angleWithY;
+			else
+				this.angleZipline = 270 - angleWithY;
+		} else {
+			if (dx > 0)
+				this.angleZipline = 0;
+			else
+				this.angleZipline = 180;
 		}
 		
+		// turn robot to zipline's angle using the smallest angle
+		double angleToTurn = Global.angle - this.angleZipline;
+		if (angleToTurn < -180)
+			angleToTurn = 360 + angleToTurn;
+		else if (angleToTurn > 180)
+			angleToTurn = 360 - angleToTurn;
+		
+		turn(angleToTurn, false);
+		
+		// traverse zipline
+		Global.ziplineMotor.setSpeed(Global.MOVING_SPEED);
+		Global.ziplineMotor.backward();
 		move(Global.ZIPLINE_LENGTH, true);
-		Thread.sleep(9000);
+		Thread.sleep(Global.ZIPLINE0_TIME); 	// float motor on zipline to maximize landing accuracy
 		Global.leftMotor.stop();
 		Global.rightMotor.stop();
 		Global.leftMotor.flt();
@@ -236,9 +259,14 @@ public class Navigation extends Thread {
 			Global.BlackLineDetected = false;
 			while (!Global.BlackLineDetected) {}
 			turn(Global.COLOR_SENSOR_OFFSET_ANGLE, false);
+			// update angle
+			if (Global.angle == 90)
+				Global.angle = 180;
+			else
+				Global.angle = 0;
 			
 			travelX(x);
-			turn(90, false);
+			
 		} else {
 			travelX(x);
 			
@@ -248,6 +276,11 @@ public class Navigation extends Thread {
 			Global.BlackLineDetected = false;
 			while (!Global.BlackLineDetected) {}
 			turn(Global.COLOR_SENSOR_OFFSET_ANGLE, false);
+			// update angle
+			if (Global.angle == 0)
+				Global.angle = 90;
+			else
+				Global.angle = 270;
 			
 			travelY(y);
 		}
@@ -357,6 +390,78 @@ public class Navigation extends Thread {
 			}
 		}
 		move(-Global.ROBOT_LENGTH, false);// reposition the robot the the center
+	}
+	
+	
+	// Require the robot to land very straight
+	public void afterZiplineLocalization2() throws Exception {
+		// start left color sensor
+		Global.leftColorSensorSwitch = true;
+		Thread.sleep(Global.THREAD_SLEEP_TIME);
+	
+		// zipline straight
+		if (this.angleZipline % 90 == 0) {
+			// reset angle
+			move(5, false);
+			turn(-Global.KEEP_MOVING, true);
+			while (!Global.BlackLineDetected) {
+			}
+			turn(Global.COLOR_SENSOR_OFFSET_ANGLE, false);
+		
+			// move to intersection
+			move(Global.KEEP_MOVING, true);
+			Global.BlackLineDetected = false;
+			while (!Global.BlackLineDetected) {}
+			move(-Global.ROBOT_LENGTH, false);
+			
+			// reset angle and position
+			Global.angle = this.angleZipline;
+			Global.X = Global.oppZiplineO[0];
+			Global.Y = Global.oppZiplineO[1];
+			
+		} else {
+			// go to ~middle of tile
+			move(10, false);
+			
+			// closest angle + reset coords (expected coords after lightPos)
+			if ((this.angleZipline>=0 && this.angleZipline<=45) || (this.angleZipline>315 && this.angleZipline<=360)) {
+				if (this.angleZipline>=0 && this.angleZipline<=45) {
+					turn(this.angleZipline, false);
+					Global.Y = Global.oppZipline[1] + 1;
+				}
+				else {
+					turn(this.angleZipline - 360.0, false);
+					Global.Y = Global.oppZipline[1];
+				}
+				Global.angle = 90; // now 0, after lightPos 90
+				Global.X = Global.oppZipline[0] + 1;
+			} else if (this.angleZipline>45 && this.angleZipline<=135) {
+				turn(this.angleZipline-90, false);
+				Global.angle = 180; // now 90, after lightPos 180
+				Global.Y = Global.oppZipline[1] + 1;
+				Global.X = Global.oppZipline[0];
+				if (this.angleZipline > 90)
+					Global.X--;
+			} else if (this.angleZipline>135 && this.angleZipline<=225) {
+				turn(this.angleZipline-180, false);
+				Global.angle = 270; // now 180, after lightPos 270
+				Global.X = Global.oppZipline[0] - 1;
+				Global.Y = Global.oppZipline[1];
+				if (this.angleZipline > 180)
+					Global.Y--;
+			} else {
+				turn(this.angleZipline-270, false);
+				Global.angle = 0;  // now 270, after lightPos 0
+				Global.X = Global.oppZipline[0];
+				Global.Y = Global.oppZipline[1] - 1;
+				if (this.angleZipline > 270)
+					Global.X++;
+			}
+			lightPosition(false);
+		}
+		
+		// turn off color sensor
+		Global.leftColorSensorSwitch = false;
 	}
 	
 	
@@ -502,8 +607,10 @@ public class Navigation extends Thread {
 		while (Global.ObstacleDistance > Global.USThreshhold) {
 		}
 		turn(Global.STOP_MOVING, false);
-
-		turn(70, false);
+		
+		// approximately straight
+		turn(-70, false);
+		
 		Global.angle = 0;
 		Global.usSwitch = false;
 		Global.rightMotor.setAcceleration(Global.ACCELERATION);
@@ -517,7 +624,7 @@ public class Navigation extends Thread {
 	 * 
 	 * @throws Exception
 	 */
-	public void lightPosition() throws Exception {
+	public void lightPosition(boolean wallCorrection) throws Exception {
 		// start the corresponding sensor thread
 		Global.leftColorSensorSwitch = true;
 		Global.secondLine = "light positionning";
@@ -555,10 +662,12 @@ public class Navigation extends Thread {
 		turn(90, false);
 		
 		// wall correction
-		move(-30, false);
-		move(Global.KEEP_MOVING, true);
-		while(!Global.BlackLineDetected) {}
-		move(-Global.ROBOT_LENGTH, false);
+		if (wallCorrection) {
+			move(-30, false);
+			move(Global.KEEP_MOVING, true);
+			while(!Global.BlackLineDetected) {}
+			move(-Global.ROBOT_LENGTH, false);
+		}
 		
 		// turn off color sensor
 		Global.leftColorSensorSwitch = false;
@@ -567,7 +676,6 @@ public class Navigation extends Thread {
 		Thread.sleep(200);
 		
 		// reset coordinates
-		Global.angle = 0;
 		Global.secondLine = "";
 	}
 	
@@ -590,13 +698,13 @@ public class Navigation extends Thread {
 			Global.angle = 90;
 			break;
 		case 2:
-			Global.X = 12;
-			Global.Y = 12;
+			Global.X = 8;
+			Global.Y = 8;
 			Global.angle = 180;
 			break;
 		case 3:
 			Global.X = 0;
-			Global.Y = 12;
+			Global.Y = 8;
 			Global.angle = 270;
 		}
 	}

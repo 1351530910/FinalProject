@@ -1,8 +1,5 @@
 package ca.mcgill.ecse211.project;
 
-import com.sun.org.apache.bcel.internal.generic.GOTO;
-import com.sun.xml.internal.ws.org.objectweb.asm.Label;
-
 import ca.mcgill.ecse211.project.main.Global;
 import lejos.hardware.Button;
 
@@ -17,7 +14,12 @@ import lejos.hardware.Button;
  */
 public class Navigation extends Thread {
 
+	private double convertAngleConstant;
+	private double convertDistanceConstant;
+	
 	public Navigation() {
+		convertDistanceConstant = (180.0 / (Math.PI * Global.WHEEL_RADIUS));
+		convertAngleConstant = convertDistanceConstant*Math.PI * Global.TRACK  / 360.0;
 	}
 
 	/**
@@ -191,7 +193,9 @@ public class Navigation extends Thread {
 				Global.rightMotor.stop();
 				Global.leftMotor.stop();
 				move(Global.SQUARE_LENGTH*1.5, false);
-				if (Global.frontColorID==Global.flagColor) {
+				Thread.sleep(Global.THREAD_SLEEP_TIME);
+				if (Global.flagDetected) {
+					findflag = false;
 					Button.waitForAnyPress();
 					move(-Global.SQUARE_LENGTH*1.5, false);
 				}
@@ -201,7 +205,7 @@ public class Navigation extends Thread {
 			}
 		}
 		
-		//return to initial position
+		//return to initial orientation
 		while(count-->0) {
 			turn(5, false);
 		}
@@ -415,40 +419,9 @@ public class Navigation extends Thread {
 		move(-Global.KEEP_MOVING, true);
 		while (!Global.BlackLineDetected) {}
 		move(-Global.ROBOT_LENGTH, false);
-		afterZiplineLocalization();
 	}
 	
-
-	/**
-	 * Converts an angle in degrees that the robot has to turn to an angle in
-	 * degrees that a wheel has to rotate.
-	 * 
-	 * @param radius
-	 *            The radius of the wheel in cm
-	 * @param width
-	 *            The width of the robot in cm
-	 * @param angle
-	 *            The angle in degrees we want the robot to turn
-	 * @return The angle in degrees the wheels has to rotate
-	 */
-	private int convertAngle(double radius, double width, double angle) {
-		return convertDistance(radius, Math.PI * width * angle / 360.0);
-	}
-
-	/**
-	 * Converts a distance in cm to an angle in degrees that the wheel with a
-	 * certain radius needs to rotate to move the robot the specified distance.
-	 * 
-	 * @param radius
-	 *            The radius of the wheel in cm
-	 * @param distance
-	 *            The distance we want the robot to move in cm
-	 * @return The angle in degrees the wheel has to rotate
-	 */
-	private int convertDistance(double radius, double distance) {
-		return (int) ((180.0 * distance) / (Math.PI * radius));
-	}
-
+	
 	/**
 	 * Make the robot travel forward at a fixed speed specified by
 	 * {@link Global.MOVING_SPEED}. It will travel the distance passed in
@@ -467,8 +440,8 @@ public class Navigation extends Thread {
 		Global.leftMotor.setSpeed(Global.MOVING_SPEED);
 		Global.rightMotor.setSpeed(Global.MOVING_SPEED);
 
-		Global.leftMotor.rotate(convertDistance(Global.WHEEL_RADIUS, distance), true);
-		Global.rightMotor.rotate(convertDistance(Global.WHEEL_RADIUS, distance), immediatereturn);
+		Global.leftMotor.rotate((int)(distance*convertDistanceConstant), true);
+		Global.rightMotor.rotate((int)(distance*convertDistanceConstant), immediatereturn);
 
 		Thread.sleep(Global.THREAD_SHORT_SLEEP_TIME);
 	}
@@ -492,12 +465,12 @@ public class Navigation extends Thread {
 		Global.leftMotor.setSpeed(Global.ROTATING_SPEED);
 		Global.rightMotor.setSpeed(Global.ROTATING_SPEED);
 		if (angle > 0) {
-			Global.leftMotor.rotate(convertAngle(Global.WHEEL_RADIUS, Global.TRACK, angle), true);
-			Global.rightMotor.rotate(-convertAngle(Global.WHEEL_RADIUS, Global.TRACK, angle), immediatereturn);
+			Global.leftMotor.rotate((int)(angle*convertAngleConstant), true);
+			Global.rightMotor.rotate((int)(-angle*convertAngleConstant), immediatereturn);
 		} else {
 			angle *= -1;
-			Global.leftMotor.rotate(-convertAngle(Global.WHEEL_RADIUS, Global.TRACK, angle), true);
-			Global.rightMotor.rotate(convertAngle(Global.WHEEL_RADIUS, Global.TRACK, angle), immediatereturn);
+			Global.leftMotor.rotate((int)(-angle*convertAngleConstant), true);
+			Global.rightMotor.rotate((int)(angle*convertAngleConstant), immediatereturn);
 		}
 		Global.turning = false;
 		Thread.sleep(Global.THREAD_SHORT_SLEEP_TIME);
@@ -518,11 +491,6 @@ public class Navigation extends Thread {
 		Global.usSensorThread.start();
 		Global.usSwitch = true;
 		Thread.sleep(Global.THREAD_SLEEP_TIME);
-		Global.odometerThread.start();
-		Global.odometerSwitch = true;
-		Thread.sleep(Global.THREAD_SLEEP_TIME);
-
-		int Angle = 0;
 
 		// make sure there is no wall in front
 		while (Global.ObstacleDistance < Global.USThreshhold) {
@@ -535,32 +503,9 @@ public class Navigation extends Thread {
 		}
 		turn(Global.STOP_MOVING, false);
 
-		// set this angle as starting angle
-		for (int i = 0; i < 5; i++) {
-			Global.angle = 0;
-		}
-
-		// redo same thing for other side
-		turn(-90, false);
-		turn(-Global.KEEP_MOVING, true);
-		while (Global.ObstacleDistance > Global.USThreshhold) {
-		}
-		turn(Global.STOP_MOVING, false);
-
-		// read angle and make it positive
-		Angle = (int) Global.angle;
-
-		// divide by 2 and add 45
-		if (Angle > 360) {// small correction to make sure it make no big cercles
-			Angle -= 360;
-		}
-		Angle = Angle >> 1;
-		Angle += 45;
-
-		turn(Angle, false);
+		turn(70, false);
 		Global.angle = 0;
 		Global.usSwitch = false;
-		Global.odometerSwitch = false;
 		Global.rightMotor.setAcceleration(Global.ACCELERATION);
 		Global.leftMotor.setAcceleration(Global.ACCELERATION);
 	}

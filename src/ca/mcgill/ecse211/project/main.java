@@ -54,8 +54,6 @@ public class main {
 		public static boolean odometerSwitch = false;
 		public static boolean turning = false;
 		
-		// odometer
-		public static Odometer odometerThread;
 		
 		// us sensor
 		public static UltrasonicSensor usSensorThread;
@@ -213,7 +211,6 @@ public class main {
 		Global.usSensorThread = new UltrasonicSensor();
 		Global.leftColorSensorThread  = new ColorSensor(0);
 		Global.frontColorSensorThread = new ColorSensor(1);
-		Global.odometerThread = new Odometer();
 		
 		// get a starting value for left color sensor
 		Global.secondLine = "Start left sensor ...";

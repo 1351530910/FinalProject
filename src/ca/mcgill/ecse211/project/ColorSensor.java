@@ -42,13 +42,15 @@ public class ColorSensor extends Thread {
 					Global.leftColor = Global.leftColorData[0];
 
 					if (Global.leftColor < Global.colorThreshhold) {
-						Global.BlackLineDetected = true;
+						Global.leftBlackLineDetected = true;
+						//Global.setLeftBlackLineDetected(true, System.currentTimeMillis());
 						try {
 							Thread.sleep(Global.THREAD_SLEEP_TIME);
 						} catch (InterruptedException e) {
 						}
 					} else {
-						Global.BlackLineDetected = false;
+						Global.leftBlackLineDetected = false;
+						//Global.setLeftBlackLineDetected(false, -1);
 					}
 				} else {
 					try {
@@ -60,7 +62,7 @@ public class ColorSensor extends Thread {
 				}
 			}
 		}
-		else {
+		else if (id==1) {
 			while(true) {
 				if (id == 1 && Global.frontColorSensorSwitch) {
 
@@ -77,6 +79,32 @@ public class ColorSensor extends Thread {
 						Global.flagDetected = false;
 					}
 
+				} else {
+					try {
+						Thread.sleep(Global.THREAD_SLEEP_TIME * 2);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		else {
+			while (true) {
+				if (Global.rightColorSensorSwitch) {
+
+					Global.rightColorProvider.fetchSample(Global.rightColorData, 0);
+					Global.rightColor = Global.rightColorData[0];
+
+					if (Global.rightColor < Global.rightColorThreshhold) {
+						Global.rightBlackLineDetected = true;
+						try {
+							Thread.sleep(Global.THREAD_SLEEP_TIME);
+						} catch (InterruptedException e) {
+						}
+					} else {
+						Global.rightBlackLineDetected = false;
+					}
 				} else {
 					try {
 						Thread.sleep(Global.THREAD_SLEEP_TIME * 2);

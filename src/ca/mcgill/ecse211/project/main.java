@@ -50,9 +50,11 @@ public class main {
 		// switches
 		public static boolean usSwitch = false;
 		public static boolean leftColorSensorSwitch = false;
+		public static boolean  rightColorSensorSwitch = false;
 		public static boolean frontColorSensorSwitch = false;
 		public static boolean odometerSwitch = false;
 		public static boolean turning = false;
+		public static boolean moving = false;
 		
 		
 		// us sensor
@@ -71,7 +73,19 @@ public class main {
 		public static SampleProvider leftColorProvider;
 		public static float leftColor = 0;
 		public static float colorThreshhold = 0;
-		public static boolean BlackLineDetected = false;
+		public static boolean leftBlackLineDetected = false;
+		public static long leftTime = -1;
+		
+		// right light sensor
+		public static ColorSensor rightColorSensorThread;
+		public static Port rightColorSensorPort;
+		public static EV3ColorSensor rightColorSensor;
+		public static float[] rightColorData;
+		public static SampleProvider rightColorProvider;
+		public static float rightColor = 0;
+		public static float rightColorThreshhold = 0;
+		public static boolean rightBlackLineDetected = false;
+		public static long rightTime = -1;
 		
 		// front light sensor
 		public static ColorSensor frontColorSensorThread;
@@ -94,7 +108,7 @@ public class main {
 		public static final int THREAD_SLEEP_TIME = 1500;
 		public static final int ACCELERATION = 2000;
 		public static final double WHEEL_RADIUS = 2.116;
-		public static final double TRACK = 10.0;
+		public static final double TRACK = 10.33;
 		public static final int ROTATING_SPEED = 90;
 		public static final int MOVING_SPEED = 125;
 		public static double ROBOT_LENGTH = 10.5;
@@ -106,9 +120,10 @@ public class main {
 		public static final int ZIPLINE_LENGTH = 250;
 		public static final int FALLING_EDGE_ANGLE = -65;
 		public static final int USThreshhold = 40;
-		public static final int ZIPLINE_TIME = 45000;
-		public static final int ZIPLINE0_TIME = 9000;
+		public static final int ZIPLINE_TIME = 48000;
 		public static final int SQUARE_DIAGONAL = 43;
+		public static final double S_TO_S = 11.5;
+		public static final int CORR_ANGLE = 4;
 		
 		// positioning
 		public static int X, Y = 0;
@@ -144,6 +159,13 @@ public class main {
 		public static int shallowVURx;
 		public static int shallowVURy;
 		
+		
+		// sensors
+		public static boolean crossed = false;
+		
+		public static boolean crossed() {
+			return Global.leftBlackLineDetected;
+		}
 	}
 	
 
@@ -203,27 +225,39 @@ public class main {
 		Global.leftColorProvider = Global.leftColorSensor.getRedMode();
 		Global.leftColorData = new float[Global.leftColorProvider.sampleSize() + 1];
 		
-		Global.frontColorSensorPort = LocalEV3.get().getPort("S3");
+		Global.rightColorSensorPort = LocalEV3.get().getPort("S4");
+		Global.rightColorSensor = new EV3ColorSensor(Global.rightColorSensorPort);
+		Global.rightColorProvider = Global.rightColorSensor.getRedMode();
+		Global.rightColorData = new float[Global.rightColorProvider.sampleSize() + 1];
+		
+		/*Global.frontColorSensorPort = LocalEV3.get().getPort("S3");
 		Global.frontColorSensor = new EV3ColorSensor(Global.frontColorSensorPort);
 		Global.frontColorProvider = Global.frontColorSensor.getColorIDMode();
 		Global.frontColorData = new float[Global.frontColorProvider.sampleSize() + 1];
+		*/
 		
 		// initialize threads
 		Global.usSensorThread = new UltrasonicSensor();
 		Global.leftColorSensorThread  = new ColorSensor(0);
-		Global.frontColorSensorThread = new ColorSensor(1);
+		//Global.frontColorSensorThread = new ColorSensor(1);
+		Global.rightColorSensorThread = new ColorSensor(2);
 		
 		// get a starting value for left color sensor
 		Global.secondLine = "Start left sensor ...";
 		Button.waitForAnyPress();
 		Global.leftColorSensorThread.start();
+		Global.rightColorSensorThread.start();
 		try {
 			Thread.sleep(Global.THREAD_SLEEP_TIME);
 		} catch (Exception e) {}		
 		Global.leftColorSensorSwitch = true;
+		Global.rightColorSensorSwitch = true;
 		while(Global.leftColor==0) {}
 		Global.colorThreshhold = (float)(Global.leftColor *0.7);
+		while(Global.rightColor==0) {}
+		Global.rightColorThreshhold = (float)(Global.rightColor*0.7);
 		Global.leftColorSensorSwitch = false;
+		Global.rightColorSensorSwitch = false;
 		
 		// start main thread
 		Global.firstLine = "";
@@ -286,7 +320,7 @@ public class main {
 		if (redTeam == Global.TEAM_NUMBER) {
 			Global.teamColor = Global.TeamColor.RED;
 			Global.startingCorner = redSC;
-			Global.flagColor = greenFlag;
+			Global.flagColor = redFlag;
 			Global.zoneLL = new int[] {redLLx, redLLy};
 			Global.zoneUR = new int[] {redURx, redURy};
 			Global.oppLL = new int[] {greenLLx, greenLLy};
@@ -301,7 +335,7 @@ public class main {
 		} else {
 			Global.teamColor = Global.TeamColor.GREEN;
 			Global.startingCorner = greenSC;
-			Global.flagColor = redFlag;
+			Global.flagColor = greenFlag;
 			Global.zoneLL = new int[] {greenLLx, greenLLy};
 			Global.zoneUR = new int[] {greenURx, greenURy};
 			Global.oppLL = new int[] {redLLx, redLLy};
@@ -348,16 +382,16 @@ public class main {
 		data.put("Red_LL_y", 7);
 		data.put("Red_UR_x", 8);
 	    data.put("Red_UR_y", 12);
-		data.put("SR_LL_x", 1);
-		data.put("SR_LL_y", 9);
+		data.put("SR_LL_x", 1); 		//demo
+		data.put("SR_LL_y", 5); 		//demo
 		data.put("SR_UR_x", 2);
 		data.put("SR_UR_y", 11);
-		data.put("ZC_R_x", 5);			//demo
-		data.put("ZC_R_y", 6);			//demo
-		data.put("ZO_R_x", 5);			//demo
-		data.put("ZO_R_y", 7); 			//demo
+		data.put("ZC_R_x", 2);			//demo
+		data.put("ZC_R_y", 2);			//demo
+		data.put("ZO_R_x", 1);			//demo
+		data.put("ZO_R_y", 2); 			//demo
 		
-		data.put("GreenCorner", 1); 	//demo
+		data.put("GreenCorner", 0); 	//demo
 		data.put("OG", 1);
 		data.put("Green_LL_x", 4);
 		data.put("Green_LL_y", 0);
@@ -367,10 +401,10 @@ public class main {
 		data.put("SG_LL_y", 1);
 		data.put("SG_UR_x", 11);
 		data.put("SG_UR_y", 2);
-		data.put("ZC_G_x", 5); 			//demo
+		data.put("ZC_G_x", 6); 			//demo
 		data.put("ZC_G_y", 2); 			//demo
-		data.put("ZO_G_x", 5); 			//demo
-		data.put("ZO_G_y", 1); 			//demo
+		data.put("ZO_G_x", 7); 			//demo
+		data.put("ZO_G_y", 2); 			//demo
 		
 		data.put("SH_LL_x", 8);
 		data.put("SH_LL_y", 9);

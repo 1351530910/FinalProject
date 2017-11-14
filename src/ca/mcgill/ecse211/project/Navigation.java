@@ -58,24 +58,36 @@ public class Navigation extends Thread {
 			// turn to the right direction
 			int dx = Global.searchLL[0] - Global.X;
 			int dy = Global.searchLL[1] - Global.Y;
-			
+			double angle;
 			if (dx >= 0) {
 				if (dy >= 0) {
+					System.out.println("DX > 0, DY > 0");
 					turn(Global.angle, false);
+					angle = Global.angle;
 					Global.angle = 0;
 				} else {
+					System.out.println("DX > 0, DY < 0");
 					turn(Global.angle - 270, false);
+					angle = Global.angle - 270;
 					Global.angle = 270;
 				}
 			} else {
 				if (dy >= 0 ) {
+					System.out.println("DX < 0, DY > 0");
 					turn(Global.angle - 90, false);
+					angle = Global.angle - 90;
 					Global.angle = 90;
 				} else {
+					System.out.println("DX < 0, DY < 0");
 					turn (Global.angle - 180, false);
+					angle = Global.angle - 180;
 					Global.angle = 180;
 				}
 			}
+			
+			System.out.println("DX: " + dx);
+			System.out.println("DY: " + dy);
+			System.out.println("Angle: " + angle);
 			
 			// adjust for navigation
 			Global.X--;
@@ -380,7 +392,7 @@ public class Navigation extends Thread {
 				move(-Global.ROBOT_LENGTH, false);// position the robot to the center
 			}
 			// moving backward
-			else {
+			else if (x < Global.X) {
 				move(Global.KEEP_MOVING, true);// keep moving backward
 
 				while (Global.X > x) {// count the blacklines traveled and stop when the destination is reached
@@ -448,7 +460,7 @@ public class Navigation extends Thread {
 					}
 				}
 				move(-Global.ROBOT_LENGTH, false);// reposition the robot the the center
-			} else {
+			} else if (y < Global.Y){
 				move(Global.KEEP_MOVING, true);// keep moving backward
 
 				while (Global.Y > y) {// count the blacklines traveled and stop when the destination is reached
@@ -535,7 +547,7 @@ public class Navigation extends Thread {
 			
 		} else {
 			// go to ~middle of tile
-			move(10, false);
+			move(45, false);
 			
 			// closest angle + reset coords (expected coords after lightPos)
 			if ((this.angleZipline>=0 && this.angleZipline<=45) || (this.angleZipline>315 && this.angleZipline<=360)) {
@@ -576,6 +588,10 @@ public class Navigation extends Thread {
 		
 		// turn off color sensor
 		Global.leftColorSensorSwitch = false;
+		
+		System.out.println("AZ X: " + Global.X);
+		System.out.println("AZ Y: " + Global.Y);
+		System.out.println("AZ ANGLE: " + Global.angle);
 	}
 	
 	

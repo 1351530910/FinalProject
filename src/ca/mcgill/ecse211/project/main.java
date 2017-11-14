@@ -123,7 +123,7 @@ public class main {
 		public static final int ZIPLINE_TIME = 48000;
 		public static final int SQUARE_DIAGONAL = 43;
 		public static final double S_TO_S = 11.5;
-		public static final int CORR_ANGLE = 4;
+		public static final int CORR_ANGLE = 5;
 		
 		// positioning
 		public static int X, Y = 0;
@@ -382,16 +382,16 @@ public class main {
 		data.put("Red_LL_y", 7);
 		data.put("Red_UR_x", 8);
 	    data.put("Red_UR_y", 12);
-		data.put("SR_LL_x", 1); 		//demo
-		data.put("SR_LL_y", 5); 		//demo
+		data.put("SR_LL_x", 7); 		//demo
+		data.put("SR_LL_y", 7); 		//demo
 		data.put("SR_UR_x", 2);
 		data.put("SR_UR_y", 11);
 		data.put("ZC_R_x", 2);			//demo
-		data.put("ZC_R_y", 2);			//demo
-		data.put("ZO_R_x", 1);			//demo
-		data.put("ZO_R_y", 2); 			//demo
+		data.put("ZC_R_y", 6);			//demo
+		data.put("ZO_R_x", 2);			//demo
+		data.put("ZO_R_y", 7); 			//demo
 		
-		data.put("GreenCorner", 0); 	//demo
+		data.put("GreenCorner", 3);		//demo
 		data.put("OG", 1);
 		data.put("Green_LL_x", 4);
 		data.put("Green_LL_y", 0);
@@ -401,10 +401,10 @@ public class main {
 		data.put("SG_LL_y", 1);
 		data.put("SG_UR_x", 11);
 		data.put("SG_UR_y", 2);
-		data.put("ZC_G_x", 6); 			//demo
+		data.put("ZC_G_x", 2); 			//demo
 		data.put("ZC_G_y", 2); 			//demo
-		data.put("ZO_G_x", 7); 			//demo
-		data.put("ZO_G_y", 2); 			//demo
+		data.put("ZO_G_x", 2); 			//demo
+		data.put("ZO_G_y", 1); 			//demo
 		
 		data.put("SH_LL_x", 8);
 		data.put("SH_LL_y", 9);

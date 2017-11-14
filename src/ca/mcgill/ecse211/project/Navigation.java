@@ -48,50 +48,33 @@ public class Navigation extends Thread {
 			else
 				travelWater();
 			
-			Global.firstLine = "X: " + Global.X;
-			Global.secondLine = "Y: " + Global.Y;
-			Global.thirdLine = "Angle: " + Global.angle;
-			Global.forthLine = "";
-			Global.fifthLine = "";
-			
 			
 			// turn to the right direction
 			int dx = Global.searchLL[0] - Global.X;
 			int dy = Global.searchLL[1] - Global.Y;
-			double angle;
 			if (dx >= 0) {
+				Global.X--;
 				if (dy >= 0) {
-					System.out.println("DX > 0, DY > 0");
+					Global.Y--;
 					turn(Global.angle, false);
-					angle = Global.angle;
 					Global.angle = 0;
 				} else {
-					System.out.println("DX > 0, DY < 0");
+					Global.Y++;
 					turn(Global.angle - 270, false);
-					angle = Global.angle - 270;
 					Global.angle = 270;
 				}
 			} else {
+				Global.X++;
 				if (dy >= 0 ) {
-					System.out.println("DX < 0, DY > 0");
+					Global.Y--;
 					turn(Global.angle - 90, false);
-					angle = Global.angle - 90;
 					Global.angle = 90;
 				} else {
-					System.out.println("DX < 0, DY < 0");
+					Global.Y++;
 					turn (Global.angle - 180, false);
-					angle = Global.angle - 180;
 					Global.angle = 180;
 				}
 			}
-			
-			System.out.println("DX: " + dx);
-			System.out.println("DY: " + dy);
-			System.out.println("Angle: " + angle);
-			
-			// adjust for navigation
-			Global.X--;
-			Global.Y--;
 					
 			// BETA: go to search zone.
 			travelTo(Global.searchLL[0], Global.searchLL[1], false);
@@ -195,11 +178,7 @@ public class Navigation extends Thread {
 		else if (angleToTurn > 180)
 			angleToTurn = 360 - angleToTurn;
 		
-		Global.firstLine = "Current: " + Global.angle;
-		Global.secondLine = "Zip: " + this.angleZipline;
-		Global.thirdLine = "With Y: " + angleWithY;
-		Global.forthLine = "Angle: " + angleToTurn;
-		Thread.sleep(5000);
+		Thread.sleep(2000);
 		
 		turn(angleToTurn, false);
 		
@@ -214,7 +193,7 @@ public class Navigation extends Thread {
 		
 		Thread.sleep(Global.ZIPLINE_TIME);
 		Global.ziplineMotor.stop();
-		turn(-15, false);
+		turn(-15, false); // correct landing
 	}
 
 	/**
@@ -360,10 +339,6 @@ public class Navigation extends Thread {
 	public void travelX(int x) throws Exception {
 		// move across x
 		Global.moving = true;
-		Global.thirdLine = "travel x";
-		Global.firstLine = "traget: " + x;
-		Global.secondLine = "current: " + Global.X;
-		
 		int count = 0;
 		
 		if (x != Global.X) {// verify if moving in x is needed
@@ -373,12 +348,11 @@ public class Navigation extends Thread {
 				move(Global.KEEP_MOVING, true);// keep moving forward
 
 				while (Global.X < x) {// count the blacklines traveled and stop when the destination is reached
-					Global.forthLine = "" + Global.X;
 					if (Global.crossed()) {
 						Global.X++;
 						Global.leftBlackLineDetected = false;
 						
-						if (++count == 2) {
+						if (++count == 2) { // hacky correction
 							move(0, false);
 							turn(Global.CORR_ANGLE, false);
 							move(Global.KEEP_MOVING, true);
@@ -396,12 +370,11 @@ public class Navigation extends Thread {
 				move(Global.KEEP_MOVING, true);// keep moving backward
 
 				while (Global.X > x) {// count the blacklines traveled and stop when the destination is reached
-					Global.forthLine = "" + Global.X;
 					if (Global.crossed()) {
 						Global.X--;
 						Global.leftBlackLineDetected = false;
 						
-						if (++count == 2) {
+						if (++count == 2) { // hacky correction
 							move(0, false);
 							turn(Global.CORR_ANGLE, false);
 							move(Global.KEEP_MOVING, true);
@@ -428,22 +401,14 @@ public class Navigation extends Thread {
 	 */
 	public void travelY(int y) throws Exception {
 		Global.moving = true;
-		// update display
-		Global.thirdLine = "travel y;";
-		Global.forthLine = "" + Global.Y;
-		
 		int count = 0;
 		
 		// move across y
 		if (y != Global.Y) {// if moving in y is needed
-			while (Global.leftMotor.isMoving()) {
-
-			}
 			if (y > Global.Y) {
 				move(Global.KEEP_MOVING, true);// keep moving forward
 
 				while (Global.Y < y) {// count the blacklines traveled and stop when the destination is reached
-					Global.forthLine = "" + Global.Y;
 					if (Global.crossed()) {
 						Global.leftBlackLineDetected = false;
 						Global.Y++;
@@ -464,7 +429,6 @@ public class Navigation extends Thread {
 				move(Global.KEEP_MOVING, true);// keep moving backward
 
 				while (Global.Y > y) {// count the blacklines traveled and stop when the destination is reached
-					Global.forthLine = "" + Global.Y;
 					if (Global.crossed()) {
 						Global.leftBlackLineDetected = false;
 						Global.Y--;
@@ -524,14 +488,6 @@ public class Navigation extends Thread {
 	
 		// zipline straight
 		if (this.angleZipline % 90 == 0) {
-			// reset angle
-			/*move(5, false);
-			turn(-Global.KEEP_MOVING, true);
-			while (!Global.leftBlackLineDetected) {
-			}
-			turn(Global.COLOR_SENSOR_OFFSET_ANGLE, false);
-			*/
-			
 			move(15, false);
 			
 			// move to intersection
@@ -559,25 +515,25 @@ public class Navigation extends Thread {
 					turn(this.angleZipline - 360.0, false);
 					Global.Y = Global.oppZipline[1];
 				}
-				Global.angle = 90; // now 0, after lightPos 90
+				Global.angle = 0; // now 0, after lightPos 90
 				Global.X = Global.oppZipline[0] + 1;
 			} else if (this.angleZipline>45 && this.angleZipline<=135) {
 				turn(this.angleZipline-90, false);
-				Global.angle = 180; // now 90, after lightPos 180
+				Global.angle = 90; // now 90, after lightPos 180
 				Global.Y = Global.oppZipline[1] + 1;
 				Global.X = Global.oppZipline[0];
 				if (this.angleZipline > 90)
 					Global.X--;
 			} else if (this.angleZipline>135 && this.angleZipline<=225) {
 				turn(this.angleZipline-180, false);
-				Global.angle = 270; // now 180, after lightPos 270
+				Global.angle = 180; // now 180, after lightPos 270
 				Global.X = Global.oppZipline[0] - 1;
 				Global.Y = Global.oppZipline[1];
 				if (this.angleZipline > 180)
 					Global.Y--;
 			} else {
 				turn(this.angleZipline-270, false);
-				Global.angle = 0;  // now 270, after lightPos 0
+				Global.angle = 270;  // now 270, after lightPos 0
 				Global.X = Global.oppZipline[0];
 				Global.Y = Global.oppZipline[1] - 1;
 				if (this.angleZipline > 270)
@@ -588,73 +544,8 @@ public class Navigation extends Thread {
 		
 		// turn off color sensor
 		Global.leftColorSensorSwitch = false;
-		
-		System.out.println("AZ X: " + Global.X);
-		System.out.println("AZ Y: " + Global.Y);
-		System.out.println("AZ ANGLE: " + Global.angle);
 	}
 	
-	
-	public void afterZiplineLocalization() throws Exception {	
-		// start left color sensor
-		Global.leftColorSensorSwitch = true;
-		Thread.sleep(Global.THREAD_SLEEP_TIME);
-		
-		//Gets off the zipline
-		if(Global.zoneZiplineO[0] != Global.oppZiplineO[0]) {
-			move(Global.SQUARE_DIAGONAL, false);
-		}
-		else {
-			move(Global.SQUARE_LENGTH, false);
-		}
-		
-		//Turns away from the red zone's back wall
-		if(Global.zoneZipline[0] > Global.oppZipline[0]) {
-			turn(135, false);
-		}
-		else if(Global.zoneZipline[0] < Global.oppZipline[0]) {
-			turn(-135, false);
-		}
-		else {
-			turn(180, false);
-		}
-		
-		//Wall correction
-		move(-45, false);
-		move(Global.KEEP_MOVING, true);
-		while (!Global.leftBlackLineDetected) {}
-		move(-Global.ROBOT_LENGTH, false);
-		
-		Global.X = Global.oppZiplineO[0];
-		Global.Y = 7;
-		Global.angle = 270;
-		
-		
-		if(Global.zoneZipline[0] > Global.oppZipline[0] && Global.oppZiplineO[0] != 1) {
-			turn(-90, false);
-			travelTo(1, 7, false);
-			Global.angle = 180;
-		}
-		else if(Global.zoneZipline[0] < Global.oppZipline[0] && Global.oppZiplineO[0] != 7) {
-			turn(90, false);
-			travelTo(7,7, false);
-			Global.angle = 0;
-		}
-		else {
-			if(Global.zoneZipline[0] >=4) {
-				turn(-90, false);
-				Global.angle = 0;
-			}
-			else {
-				turn(90, false);
-				Global.angle = 180;
-			}
-			move(125, false);
-		}
-		move(-Global.KEEP_MOVING, true);
-		while (!Global.leftBlackLineDetected) {}
-		move(-Global.ROBOT_LENGTH, false);
-	}
 	
 	
 	/**

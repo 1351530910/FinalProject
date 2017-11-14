@@ -130,7 +130,7 @@ public class main {
 		public static double angle = 0;
 		
 		// wifi settings
-		public static final boolean USE_WIFI = false;
+		public static final boolean USE_WIFI = true;
 		public static final String SERVER_IP = "192.168.2.3";
 		public static final int TEAM_NUMBER = 18;
 		public static final boolean WIFI_DEBUG = false;
@@ -243,8 +243,6 @@ public class main {
 		Global.rightColorSensorThread = new ColorSensor(2);
 		
 		// get a starting value for left color sensor
-		Global.secondLine = "Start left sensor ...";
-		Button.waitForAnyPress();
 		Global.leftColorSensorThread.start();
 		Global.rightColorSensorThread.start();
 		try {

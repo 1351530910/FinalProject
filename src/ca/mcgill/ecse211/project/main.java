@@ -50,9 +50,7 @@ public class main {
 		// switches
 		public static boolean usSwitch = false;
 		public static boolean leftColorSensorSwitch = false;
-		public static boolean  rightColorSensorSwitch = false;
 		public static boolean frontColorSensorSwitch = false;
-		public static boolean odometerSwitch = false;
 		public static boolean turning = false;
 		public static boolean moving = false;
 		
@@ -76,16 +74,6 @@ public class main {
 		public static boolean leftBlackLineDetected = false;
 		public static long leftTime = -1;
 		
-		// right light sensor
-		public static ColorSensor rightColorSensorThread;
-		public static Port rightColorSensorPort;
-		public static EV3ColorSensor rightColorSensor;
-		public static float[] rightColorData;
-		public static SampleProvider rightColorProvider;
-		public static float rightColor = 0;
-		public static float rightColorThreshhold = 0;
-		public static boolean rightBlackLineDetected = false;
-		public static long rightTime = -1;
 		
 		// front light sensor
 		public static ColorSensor frontColorSensorThread;
@@ -123,7 +111,7 @@ public class main {
 		public static final int ZIPLINE_TIME = 48000;
 		public static final int SQUARE_DIAGONAL = 43;
 		public static final double S_TO_S = 11.5;
-		public static final int CORR_ANGLE = 5;
+		public static final double CORR_ANGLE = 4.5;
 		
 		// positioning
 		public static int X, Y = 0;
@@ -225,37 +213,24 @@ public class main {
 		Global.leftColorProvider = Global.leftColorSensor.getRedMode();
 		Global.leftColorData = new float[Global.leftColorProvider.sampleSize() + 1];
 		
-		Global.rightColorSensorPort = LocalEV3.get().getPort("S4");
-		Global.rightColorSensor = new EV3ColorSensor(Global.rightColorSensorPort);
-		Global.rightColorProvider = Global.rightColorSensor.getRedMode();
-		Global.rightColorData = new float[Global.rightColorProvider.sampleSize() + 1];
-		
-		/*Global.frontColorSensorPort = LocalEV3.get().getPort("S3");
+		Global.frontColorSensorPort = LocalEV3.get().getPort("S3");
 		Global.frontColorSensor = new EV3ColorSensor(Global.frontColorSensorPort);
 		Global.frontColorProvider = Global.frontColorSensor.getColorIDMode();
 		Global.frontColorData = new float[Global.frontColorProvider.sampleSize() + 1];
-		*/
 		
 		// initialize threads
 		Global.usSensorThread = new UltrasonicSensor();
 		Global.leftColorSensorThread  = new ColorSensor(0);
-		//Global.frontColorSensorThread = new ColorSensor(1);
-		Global.rightColorSensorThread = new ColorSensor(2);
+		Global.frontColorSensorThread = new ColorSensor(1);
 		
 		// get a starting value for left color sensor
 		Global.leftColorSensorThread.start();
-		Global.rightColorSensorThread.start();
 		try {
 			Thread.sleep(Global.THREAD_SLEEP_TIME);
 		} catch (Exception e) {}		
 		Global.leftColorSensorSwitch = true;
-		Global.rightColorSensorSwitch = true;
 		while(Global.leftColor==0) {}
 		Global.colorThreshhold = (float)(Global.leftColor *0.7);
-		while(Global.rightColor==0) {}
-		Global.rightColorThreshhold = (float)(Global.rightColor*0.7);
-		Global.leftColorSensorSwitch = false;
-		Global.rightColorSensorSwitch = false;
 		
 		// start main thread
 		Global.firstLine = "";
@@ -358,8 +333,8 @@ public class main {
      * @see 			main#parseGameData 
     */
 	private static int intVal(Object obj) {
-		//return ((Long) obj).intValue();
-		return (int) obj;
+		return ((Long) obj).intValue();
+		//return (int) obj;
 	}
     
 

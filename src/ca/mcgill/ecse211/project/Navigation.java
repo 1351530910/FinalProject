@@ -19,6 +19,10 @@ public class Navigation extends Thread {
 	
 	private double angleZipline;
 	
+	/**
+	 * The constructor compute values that will stay constant during the
+	 * navigation.
+	 */
 	public Navigation() {
 		convertDistanceConstant = (180.0 / (Math.PI * Global.WHEEL_RADIUS));
 		convertAngleConstant = convertDistanceConstant*Math.PI * Global.TRACK  / 360.0;
@@ -43,7 +47,7 @@ public class Navigation extends Thread {
 			// Cross transit
 			if (Global.teamColor == Global.TeamColor.GREEN) {
 				travelZipline();
-				afterZiplineLocalization2();
+				afterZiplineLocalization();
 			}
 			else
 				travelWater();
@@ -52,9 +56,9 @@ public class Navigation extends Thread {
 			// turn to the right direction
 			int dx = Global.searchLL[0] - Global.X;
 			int dy = Global.searchLL[1] - Global.Y;
-			if (dx >= 0) {
+			if (dx > 0) {
 				Global.X--;
-				if (dy >= 0) {
+				if (dy > 0) {
 					Global.Y--;
 					turn(Global.angle, false);
 					Global.angle = 0;
@@ -65,7 +69,7 @@ public class Navigation extends Thread {
 				}
 			} else {
 				Global.X++;
-				if (dy >= 0 ) {
+				if (dy > 0 ) {
 					Global.Y--;
 					turn(Global.angle - 90, false);
 					Global.angle = 90;
@@ -75,7 +79,13 @@ public class Navigation extends Thread {
 					Global.angle = 180;
 				}
 			}
-					
+			
+			
+			
+			Global.firstLine = "" + Global.X;
+			Global.secondLine = "" + Global.Y;
+			Global.thirdLine = "" + Global.angle;
+			
 			// BETA: go to search zone.
 			travelTo(Global.searchLL[0], Global.searchLL[1], false);
 			
@@ -178,14 +188,14 @@ public class Navigation extends Thread {
 		else if (angleToTurn > 180)
 			angleToTurn = 360 - angleToTurn;
 		
-		Thread.sleep(2000);
+		Thread.sleep(1000);
 		
 		turn(angleToTurn, false);
 		
 		// traverse zipline
 		Global.ziplineMotor.setSpeed(Global.MOVING_SPEED);
 		Global.ziplineMotor.backward();
-		move(50, false);
+		move(60, false);
 		Global.leftMotor.stop();
 		Global.rightMotor.stop();
 		Global.leftMotor.flt();
@@ -260,7 +270,7 @@ public class Navigation extends Thread {
 	
 	/**
 	 * Make the robot travel to a given X and Y position. It first moves along the X
-	 * axis, then along the Y axis. It also performs wall correction to assure the
+	 * axis, then along the Y axis. It can also performs wall correction to assure the
 	 * robot is moving in a straight line. It uses the left color sensor to detect
 	 * lines as it's moving.
 	 * @throws Exception 
@@ -268,6 +278,8 @@ public class Navigation extends Thread {
 	 *            The target x coordinate
 	 * @param y
 	 *            The target y coordinate
+	 * @param wallCorrection
+	 * 			  If true, will perform wall correction after turning
 	 */
 	public void travelTo(int x, int y, boolean wallCorrection) throws Exception {
 		// activate required threads
@@ -276,8 +288,10 @@ public class Navigation extends Thread {
 
 		if (Global.angle == 90 || Global.angle == 270) {
 			
-			if (wallCorrection)
-				move(-30, false);
+			if (Math.abs(y-Global.Y) > 1)
+				if (wallCorrection)
+					move(-30, false);
+			
 			travelY(y);
 			
 			// turn to the correct direction using the black lines
@@ -292,14 +306,16 @@ public class Navigation extends Thread {
 			else
 				Global.angle = 0;
 			
-			if (wallCorrection)
-				move(-30, false);
+			if (Math.abs(x-Global.X) > 1)
+				if (wallCorrection)
+					move(-30, false);
 			
 			travelX(x);
 			
 		} else {
-			if (wallCorrection)
-				move(-30, false);
+			if (Math.abs(x-Global.X) > 1)
+				if (wallCorrection)
+					move(-30, false);
 			travelX(x);
 			
 			// turn to the correct direction using the black lines
@@ -314,8 +330,9 @@ public class Navigation extends Thread {
 			else
 				Global.angle = 270;
 			
-			if (wallCorrection)
-				move(-30, false);
+			if (Math.abs(y-Global.Y) > 1)
+				if (wallCorrection)
+					move(-30, false);
 			
 			travelY(y);
 		}
@@ -339,12 +356,19 @@ public class Navigation extends Thread {
 	public void travelX(int x) throws Exception {
 		// move across x
 		Global.moving = true;
+		Global.leftBlackLineDetected = false;
 		int count = 0;
 		
 		if (x != Global.X) {// verify if moving in x is needed
 
 			// moving forward
 			if (x > Global.X) {
+				
+				if (x == Global.X + 1) {
+					Global.X++;
+					return;
+				}
+				
 				move(Global.KEEP_MOVING, true);// keep moving forward
 
 				while (Global.X < x) {// count the blacklines traveled and stop when the destination is reached
@@ -367,6 +391,12 @@ public class Navigation extends Thread {
 			}
 			// moving backward
 			else if (x < Global.X) {
+				
+				if (x == Global.X - 1) {
+					Global.X--;
+					return;
+				}
+				
 				move(Global.KEEP_MOVING, true);// keep moving backward
 
 				while (Global.X > x) {// count the blacklines traveled and stop when the destination is reached
@@ -401,11 +431,18 @@ public class Navigation extends Thread {
 	 */
 	public void travelY(int y) throws Exception {
 		Global.moving = true;
+		Global.leftBlackLineDetected = false;
 		int count = 0;
 		
 		// move across y
 		if (y != Global.Y) {// if moving in y is needed
 			if (y > Global.Y) {
+				
+				if (y == Global.Y + 1) {
+					Global.Y++;
+					return;
+				}
+				
 				move(Global.KEEP_MOVING, true);// keep moving forward
 
 				while (Global.Y < y) {// count the blacklines traveled and stop when the destination is reached
@@ -426,6 +463,12 @@ public class Navigation extends Thread {
 				}
 				move(-Global.ROBOT_LENGTH, false);// reposition the robot the the center
 			} else if (y < Global.Y){
+				
+				if (y == Global.Y - 1) {
+					Global.Y--;
+					return;
+				}
+				
 				move(Global.KEEP_MOVING, true);// keep moving backward
 
 				while (Global.Y > y) {// count the blacklines traveled and stop when the destination is reached
@@ -450,6 +493,7 @@ public class Navigation extends Thread {
 	}
 	
 	
+	/*
 	public double timeAngleCorrection(long left, long right) {
 		
 		double angle = 0;
@@ -470,18 +514,21 @@ public class Navigation extends Thread {
 			angle *= -1;
 		}
 		
-		System.out.println("\nANGLE CORRE");
-		System.out.println(diff);
-		System.out.println(deg);
-		System.out.println(d);
-		System.out.println(angle);
-		
 		return angle;
 	}
+	*/
 	
 	
-	// Require the robot to land very straight
-	public void afterZiplineLocalization2() throws Exception {
+	/**
+	 * Localization routine for when the robot finishes
+	 * traversing the zipline. If the zipline is straight, 
+	 * simply go the next intersection. Else, move to the middle
+	 * of a tile, turn to be perpendicular with a black line and
+	 * perform the light positionning {@link Navigation.lightPosition} 
+	 * routine.
+	 * @throws Exception
+	 */
+	public void afterZiplineLocalization() throws Exception {
 		// start left color sensor
 		Global.leftColorSensorSwitch = true;
 		Thread.sleep(Global.THREAD_SLEEP_TIME);

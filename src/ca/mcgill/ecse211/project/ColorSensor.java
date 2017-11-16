@@ -15,7 +15,7 @@ public class ColorSensor extends Thread {
 	 * The id of the color sensor defines which physical sensor we want to model.
 	 * <ul>
 	 * <li>0 -> left color sensor in RED mode</li>
-	 * <li>1 -> front color sensor in COLORID mode</li>
+	 * <li>1 -> front color sensor in RGB mode</li>
 	 * </ul>
 	 * 
 	 * @param id
@@ -79,32 +79,6 @@ public class ColorSensor extends Thread {
 						Global.flagDetected = false;
 					}
 
-				} else {
-					try {
-						Thread.sleep(Global.THREAD_SLEEP_TIME * 2);
-					} catch (InterruptedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-			}
-		}
-		else {
-			while (true) {
-				if (Global.rightColorSensorSwitch) {
-
-					Global.rightColorProvider.fetchSample(Global.rightColorData, 0);
-					Global.rightColor = Global.rightColorData[0];
-
-					if (Global.rightColor < Global.rightColorThreshhold) {
-						Global.rightBlackLineDetected = true;
-						try {
-							Thread.sleep(Global.THREAD_SLEEP_TIME);
-						} catch (InterruptedException e) {
-						}
-					} else {
-						Global.rightBlackLineDetected = false;
-					}
 				} else {
 					try {
 						Thread.sleep(Global.THREAD_SLEEP_TIME * 2);

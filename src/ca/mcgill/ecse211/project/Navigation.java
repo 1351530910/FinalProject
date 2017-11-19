@@ -13,8 +13,16 @@ import lejos.hardware.Button;
  * @version 1.0
  */
 public class Navigation extends Thread {
-
+    
+	//this is the current robot position
+	boolean redteam;
+	
 	public Navigation() {
+		if (Global.teamColor==Global.TeamColor.RED) {
+			redteam = true;
+		}else {
+			redteam = false;
+		}
 	}
 
 	/**
@@ -139,7 +147,6 @@ public class Navigation extends Thread {
 				}
 			}
 		} catch (Exception e) {
-		}
 	}
 
 	/**

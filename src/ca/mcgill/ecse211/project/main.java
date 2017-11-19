@@ -184,8 +184,6 @@ public class main {
             parseGameData(generateTestData());
         }
 		
-		Global.firstLine = "Initializing";
-		
 		// initialize us sensor
 		Global.usPort = LocalEV3.get().getPort("S1");
 		try {

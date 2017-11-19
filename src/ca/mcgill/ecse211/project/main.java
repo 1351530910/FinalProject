@@ -51,11 +51,9 @@ public class main {
 		public static boolean usSwitch = false;
 		public static boolean leftColorSensorSwitch = false;
 		public static boolean frontColorSensorSwitch = false;
-		public static boolean odometerSwitch = false;
 		public static boolean turning = false;
+		public static boolean moving = false;
 		
-		// odometer
-		public static Odometer odometerThread;
 		
 		// us sensor
 		public static UltrasonicSensor usSensorThread;
@@ -73,7 +71,9 @@ public class main {
 		public static SampleProvider leftColorProvider;
 		public static float leftColor = 0;
 		public static float colorThreshhold = 0;
-		public static boolean BlackLineDetected = false;
+		public static boolean leftBlackLineDetected = false;
+		public static long leftTime = -1;
+		
 		
 		// front light sensor
 		public static ColorSensor frontColorSensorThread;
@@ -96,7 +96,7 @@ public class main {
 		public static final int THREAD_SLEEP_TIME = 1500;
 		public static final int ACCELERATION = 2000;
 		public static final double WHEEL_RADIUS = 2.116;
-		public static final double TRACK = 10.0;
+		public static final double TRACK = 10.33;
 		public static final int ROTATING_SPEED = 90;
 		public static final int MOVING_SPEED = 125;
 		public static double ROBOT_LENGTH = 10.5;
@@ -108,13 +108,17 @@ public class main {
 		public static final int ZIPLINE_LENGTH = 250;
 		public static final int FALLING_EDGE_ANGLE = -65;
 		public static final int USThreshhold = 40;
+		public static final int ZIPLINE_TIME = 48000;
+		public static final int SQUARE_DIAGONAL = 43;
+		public static final double S_TO_S = 11.5;
+		public static final double CORR_ANGLE = 4.5;
 		
 		// positioning
 		public static int X, Y = 0;
 		public static double angle = 0;
 		
 		// wifi settings
-		public static final boolean USE_WIFI = false;
+		public static final boolean USE_WIFI = true;
 		public static final String SERVER_IP = "192.168.2.3";
 		public static final int TEAM_NUMBER = 18;
 		public static final boolean WIFI_DEBUG = false;
@@ -143,6 +147,13 @@ public class main {
 		public static int shallowVURx;
 		public static int shallowVURy;
 		
+		
+		// sensors
+		public static boolean crossed = false;
+		
+		public static boolean crossed() {
+			return Global.leftBlackLineDetected;
+		}
 	}
 	
 
@@ -209,11 +220,8 @@ public class main {
 		Global.usSensorThread = new UltrasonicSensor();
 		Global.leftColorSensorThread  = new ColorSensor(0);
 		Global.frontColorSensorThread = new ColorSensor(1);
-		Global.odometerThread = new Odometer();
 		
 		// get a starting value for left color sensor
-		Global.secondLine = "Start left sensor ...";
-		Button.waitForAnyPress();
 		Global.leftColorSensorThread.start();
 		try {
 			Thread.sleep(Global.THREAD_SLEEP_TIME);
@@ -221,7 +229,6 @@ public class main {
 		Global.leftColorSensorSwitch = true;
 		while(Global.leftColor==0) {}
 		Global.colorThreshhold = (float)(Global.leftColor *0.7);
-		Global.leftColorSensorSwitch = false;
 		
 		// start main thread
 		Global.firstLine = "";
@@ -284,7 +291,7 @@ public class main {
 		if (redTeam == Global.TEAM_NUMBER) {
 			Global.teamColor = Global.TeamColor.RED;
 			Global.startingCorner = redSC;
-			Global.flagColor = greenFlag;
+			Global.flagColor = redFlag;
 			Global.zoneLL = new int[] {redLLx, redLLy};
 			Global.zoneUR = new int[] {redURx, redURy};
 			Global.oppLL = new int[] {greenLLx, greenLLy};
@@ -299,7 +306,7 @@ public class main {
 		} else {
 			Global.teamColor = Global.TeamColor.GREEN;
 			Global.startingCorner = greenSC;
-			Global.flagColor = redFlag;
+			Global.flagColor = greenFlag;
 			Global.zoneLL = new int[] {greenLLx, greenLLy};
 			Global.zoneUR = new int[] {greenURx, greenURy};
 			Global.oppLL = new int[] {redLLx, redLLy};
@@ -324,8 +331,8 @@ public class main {
      * @see 			main#parseGameData 
     */
 	private static int intVal(Object obj) {
-		//return ((Long) obj).intValue();
-		return (int) obj;
+		return ((Long) obj).intValue();
+		//return (int) obj;
 	}
     
 
@@ -341,22 +348,22 @@ public class main {
         Map<String, Integer> data = new HashMap<String, Integer>();
 	    data.put("RedTeam", 1);
 		data.put("RedCorner", 3);
-		data.put("OR", 1);          // Color of red flag
+		data.put("OR", 1);
 		data.put("Red_LL_x", 0);
 		data.put("Red_LL_y", 7);
 		data.put("Red_UR_x", 8);
 	    data.put("Red_UR_y", 12);
-		data.put("SR_LL_x", 1);
-		data.put("SR_LL_y", 9);
+		data.put("SR_LL_x", 7); 		//demo
+		data.put("SR_LL_y", 7); 		//demo
 		data.put("SR_UR_x", 2);
 		data.put("SR_UR_y", 11);
-		data.put("ZC_R_x", 4);
-		data.put("ZC_R_y", 9);
-		data.put("ZO_R_x", 3);
-		data.put("ZO_R_y", 10);
+		data.put("ZC_R_x", 2);			//demo
+		data.put("ZC_R_y", 6);			//demo
+		data.put("ZO_R_x", 2);			//demo
+		data.put("ZO_R_y", 7); 			//demo
 		
-		data.put("GreenCorner", 1);
-		data.put("OG", 2);
+		data.put("GreenCorner", 3);		//demo
+		data.put("OG", 1);
 		data.put("Green_LL_x", 4);
 		data.put("Green_LL_y", 0);
 		data.put("Green_UR_x", 12);
@@ -365,10 +372,10 @@ public class main {
 		data.put("SG_LL_y", 1);
 		data.put("SG_UR_x", 11);
 		data.put("SG_UR_y", 2);
-		data.put("ZC_G_x", 9);
-		data.put("ZC_G_y", 3);
-		data.put("ZO_G_x", 10);
-		data.put("ZO_G_y", 2);
+		data.put("ZC_G_x", 2); 			//demo
+		data.put("ZC_G_y", 2); 			//demo
+		data.put("ZO_G_x", 2); 			//demo
+		data.put("ZO_G_y", 1); 			//demo
 		
 		data.put("SH_LL_x", 8);
 		data.put("SH_LL_y", 9);

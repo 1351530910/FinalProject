@@ -89,5 +89,33 @@ public class ColorSensor extends Thread {
 				}
 			}
 		}
+		
+		else if (id==2) {
+			while (true) {
+				if (Global.rightColorSensorSwitch) {
+
+					Global.rightColorProvider.fetchSample(Global.rightColorData, 0);
+					Global.rightColor = Global.rightColorData[0];
+
+					if (Global.rightColor < Global.rightColorThreshhold) {
+						Global.rightBlackLineDetected = true;
+						try {
+							Thread.sleep(Global.THREAD_SLEEP_TIME);
+						} catch (InterruptedException e) {
+						}
+					} else {
+						Global.rightBlackLineDetected = false;
+					}
+				} else {
+					try {
+						Thread.sleep(Global.THREAD_SLEEP_TIME * 2);
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
+			}
+		}
+		
 	}
 }

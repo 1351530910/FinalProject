@@ -64,7 +64,7 @@ public class Navigation extends Thread {
 			System.out.println("\nAfter first transit");
 			System.out.println("X: " + Global.X + " Y: " + Global.Y + " Angle: " + Global.angle);
 				
-			// turn to the right direction for traveling
+			// turn to the right direction for traveling to the search zone
 			boolean clockwiseTravel = ziplineOnCCPath(Global.searchLL[0], Global.searchLL[1], false);
 			if (clockwiseTravel)
 				turnClockwiseTravel(Global.searchLL[0], Global.searchLL[1]);
@@ -75,7 +75,7 @@ public class Navigation extends Thread {
 			System.out.println("After turning for travel");
 			System.out.println("X: " + Global.X + " Y: " + Global.Y + " Angle: " + Global.angle);
 			
-			// Travel to the search zone
+			// Travel to the search zone and turn to 90 deg.
 			travelTo(Global.searchLL[0], Global.searchLL[1], false, clockwiseTravel);
 			turn(Global.angle - 90, false);
 			
@@ -105,6 +105,7 @@ public class Navigation extends Thread {
 			System.out.println("\nAfter water");
 			System.out.println("X: " + Global.X + " Y: " + Global.Y + " Angle: " + Global.angle);
 			
+			// go to starting corner
 			travelToStartingCorner();
 			
 			// Done
@@ -113,110 +114,6 @@ public class Navigation extends Thread {
 
 		} catch (Exception e) {
 			e.printStackTrace();
-		}
-	}
-
-	/**
-	 * Check if the zipline is on the counter-clockwise path of the robot
-	 * @param x 	the x destination
-	 * @param y 	the y destionation
-	 * @param zone 	true if the robot is in its zone
-	 * @return		true if the zipline is on the cc path
-	 */
-	public boolean ziplineOnCCPath(int x, int y, boolean zone) {
-		int zipX, zipY;
-		if (zone) {
-			zipX = Global.zoneZipline[0];
-			zipY = Global.zoneZipline[1];
-		} else {
-			zipX = Global.oppZipline[0];
-			zipY = Global.oppZipline[1];
-		}
-		
-		int dx = x - Global.X;
-		int dy = y - Global.Y;
-		
-		// angle you should be at for cc travel
-		int angle;
-		if (dx >= 0) {
-			if (dy >= 0)
-				angle = 0;
-			else
-				angle = 270;
-		} else {
-			if (dy >= 0)
-				angle = 90;
-			else
-				angle = 180;
-		}
-		
-		
-		if (angle == 0) 
-			return (zipX >= Global.X) && (zipX <= x) && (zipY >= Global.Y) && (zipY <= y);
-		else if (angle == 90)
-			return (zipX >= x) && (zipX <= Global.X) && (zipY >= Global.Y) && (zipY <= y);
-		else if (angle == 180)
-			return (zipX >= x) && (zipX <= Global.X) && (zipY >= y) && (zipY <= Global.Y);
-		else if (angle == 270)
-			return (zipX >= Global.X) && (zipX <= x) && (zipY >= y) && (zipY <= Global.Y);
-		
-		return false;
-	}
-	
-	public void turnClockwiseTravel(int x, int y) throws Exception {
-		int dx = x - Global.X;
-		int dy = y - Global.Y;
-		if (dx >= 0) {
-			Global.X--;
-			if (dy >= 0) {
-				Global.Y--;
-				turn(Global.angle - 90, false);
-				Global.angle = 90;
-			} else {
-				Global.Y++;
-				turn(Global.angle, false);
-				Global.angle = 0;
-			}
-		} else {
-			Global.X++;
-			if (dy >= 0) {
-				Global.Y--;
-				turn(Global.angle - 180, false);
-				Global.angle = 180;
-			} else {
-				Global.Y++;
-				turn(Global.angle - 270, false);
-				Global.angle = 270;
-			}
-		}
-	}
-	
-	public void turnCounterClockwiseTravel(int x, int y) throws Exception {
-		// turn to the right direction
-		int dx = x - Global.X;
-		int dy = y - Global.Y;
-		if (dx >= 0) {
-			Global.X--;
-			if (dy >= 0) {
-				Global.Y--;
-				turn(Global.angle, false);
-				Global.angle = 0;
-			} else {
-				Global.Y++;
-				turn(Global.angle - 270, false);
-				Global.angle = 270;
-			}
-		} else {
-			Global.X++;
-			if (dy >= 0 ) {
-				Global.Y--;
-				turn(Global.angle - 90, false);
-				Global.angle = 90;
-			} else {
-				Global.Y++;
-				turn (Global.angle - 180, false);
-				Global.angle = 180;
-			}
 		}
 	}
 	
@@ -684,15 +581,143 @@ public class Navigation extends Thread {
 		Global.moving = false;
 	}
 	
+	/**
+	 * Turn the robot to the right orientation to travel
+	 * in a clockwise fashion to the destination
+	 * 
+	 * @param x 	the x coordinate of the destination
+	 * @param y 	the y coordinate of the destination
+	 * @throws Exception
+	 */
+	public void turnClockwiseTravel(int x, int y) throws Exception {
+		int dx = x - Global.X;
+		int dy = y - Global.Y;
+		if (dx >= 0) {
+			Global.X--;
+			if (dy >= 0) {
+				Global.Y--;
+				turn(Global.angle - 90, false);
+				Global.angle = 90;
+			} else {
+				Global.Y++;
+				turn(Global.angle, false);
+				Global.angle = 0;
+			}
+		} else {
+			Global.X++;
+			if (dy >= 0) {
+				Global.Y--;
+				turn(Global.angle - 180, false);
+				Global.angle = 180;
+			} else {
+				Global.Y++;
+				turn(Global.angle - 270, false);
+				Global.angle = 270;
+			}
+		}
+	}
 	
-	/*
+	/**
+	 * Turn the robot to the right orientation to travel
+	 * in a counter-clockwise fashion to the destination
+	 * 
+	 * @param x 	the x coordinate of the destination
+	 * @param y 	the y coordinate of the destination
+	 * @throws Exception
+	 */
+	public void turnCounterClockwiseTravel(int x, int y) throws Exception {
+		// turn to the right direction
+		int dx = x - Global.X;
+		int dy = y - Global.Y;
+		if (dx >= 0) {
+			Global.X--;
+			if (dy >= 0) {
+				Global.Y--;
+				turn(Global.angle, false);
+				Global.angle = 0;
+			} else {
+				Global.Y++;
+				turn(Global.angle - 270, false);
+				Global.angle = 270;
+			}
+		} else {
+			Global.X++;
+			if (dy >= 0 ) {
+				Global.Y--;
+				turn(Global.angle - 90, false);
+				Global.angle = 90;
+			} else {
+				Global.Y++;
+				turn (Global.angle - 180, false);
+				Global.angle = 180;
+			}
+		}
+	}
+	
+	
+	/**
+	 * Check if the zipline is on the counter-clockwise path of the robot
+	 * @param x 	the x destination
+	 * @param y 	the y destionation
+	 * @param zone 	true if the robot is in its zone
+	 * @return		true if the zipline is on the cc path
+	 */
+	public boolean ziplineOnCCPath(int x, int y, boolean zone) {
+		int zipX, zipY;
+		if (zone) {
+			zipX = Global.zoneZipline[0];
+			zipY = Global.zoneZipline[1];
+		} else {
+			zipX = Global.oppZipline[0];
+			zipY = Global.oppZipline[1];
+		}
+		
+		int dx = x - Global.X;
+		int dy = y - Global.Y;
+		
+		// angle you should be at for cc travel
+		int angle;
+		if (dx >= 0) {
+			if (dy >= 0)
+				angle = 0;
+			else
+				angle = 270;
+		} else {
+			if (dy >= 0)
+				angle = 90;
+			else
+				angle = 180;
+		}
+		
+		
+		if (angle == 0) 
+			return (zipX >= Global.X) && (zipX <= x) && (zipY >= Global.Y) && (zipY <= y);
+		else if (angle == 90)
+			return (zipX >= x) && (zipX <= Global.X) && (zipY >= Global.Y) && (zipY <= y);
+		else if (angle == 180)
+			return (zipX >= x) && (zipX <= Global.X) && (zipY >= y) && (zipY <= Global.Y);
+		else if (angle == 270)
+			return (zipX >= Global.X) && (zipX <= x) && (zipY >= y) && (zipY <= Global.Y);
+		
+		return false;
+	}
+	
+	
+	/**
+	 * When using two light sensor for navigation, this method
+	 * compute the angle the robot should turn to go back to
+	 * traveling in a straight line.
+	 * 
+	 * @param left 	The time when the left sensor saw the black line
+	 * @param right	The time when the right sensor saw the black line
+	 */
 	public double timeAngleCorrection(long left, long right) {
 		
 		double angle = 0;
 		double d;
 		double deg;
 		
-		// time in usec
+		// time in msec
 		long diff = (left-right);
 		
 		if (diff > 0) {
@@ -708,7 +733,7 @@ public class Navigation extends Thread {
 		
 		return angle;
 	}
-	*/
+	
 	
 	
 	/**
@@ -976,6 +1001,12 @@ public class Navigation extends Thread {
 		}
 	}
 	
+	
+	/**
+	 * Travel back to the starting corner by first hitting a wall, 
+	 * then traveling on X to go back to the corner
+	 * @throws Exception
+	 */
 	public void travelToStartingCorner() throws Exception {
 		
 		Global.leftBlackLineDetected = false;
@@ -1049,6 +1080,10 @@ public class Navigation extends Thread {
 		Global.leftColorSensorSwitch = false;
 	}
 	
+	/**
+	 * Calculate the orientation of the horizontal part of the
+	 * water section.
+	 */
 	public void calculateWaterOrientation() {
 		if (Global.shallowHURx == Global.shallowVURx && Global.shallowHURy == Global.shallowVURy)
 			waterOrientation = 0;

@@ -129,8 +129,9 @@ public class main {
 		public static double angle = 0;
 		
 		// wifi settings
-		public static final boolean USE_WIFI = false;
-		public static final String SERVER_IP = "192.168.2.3";
+		public static final boolean USE_WIFI = true;
+		public static final String SERVER_IP = "192.168.2.8";
+		//public static final String SERVER_IP = "192.168.2.3";
 		public static final int TEAM_NUMBER = 18;
 		public static final boolean WIFI_DEBUG = false;
 		
@@ -222,10 +223,12 @@ public class main {
 		Global.leftColorProvider = Global.leftColorSensor.getRedMode();
 		Global.leftColorData = new float[Global.leftColorProvider.sampleSize() + 1];
 		
+		/*
 		Global.rightColorSensorPort = LocalEV3.get().getPort("S4");
 		Global.rightColorSensor = new EV3ColorSensor(Global.rightColorSensorPort);
 		Global.rightColorProvider = Global.rightColorSensor.getRedMode();
 		Global.rightColorData = new float[Global.rightColorProvider.sampleSize() + 1];
+		*/
 		
 		Global.frontColorSensorPort = LocalEV3.get().getPort("S3");
 		Global.frontColorSensor = new EV3ColorSensor(Global.frontColorSensorPort);
@@ -236,11 +239,11 @@ public class main {
 		Global.usSensorThread = new UltrasonicSensor();
 		Global.leftColorSensorThread  = new ColorSensor(0);
 		Global.frontColorSensorThread = new ColorSensor(1);
-		Global.rightColorSensorThread = new ColorSensor(2);
+		//Global.rightColorSensorThread = new ColorSensor(2);
 		
 		// get a starting value for left color sensor
 		Global.leftColorSensorThread.start();
-		Global.rightColorSensorThread.start();
+		//Global.rightColorSensorThread.start();
 		try {
 			Thread.sleep(Global.THREAD_SLEEP_TIME);
 		} catch (Exception e) {}		
@@ -248,10 +251,12 @@ public class main {
 		while(Global.leftColor==0) {}
 		Global.colorThreshhold = (float)(Global.leftColor *0.7);
 		Global.leftColorSensorSwitch = false;
+		/*
 		Global.rightColorSensorSwitch = true;
 		while(Global.rightColor==0) {}
 		Global.rightColorThreshhold = (float)(Global.rightColor *0.7);
 		Global.rightColorSensorSwitch = false;
+		*/
 		
 		// start main thread
 		Global.firstLine = "";

@@ -122,7 +122,8 @@ public class main {
 		public static final int ZIPLINE_TIME = 48000;
 		public static final int SQUARE_DIAGONAL = 43;
 		public static final double S_TO_S = 11.5;
-		public static final double CORR_ANGLE = 4.5;
+		public static final double CORR_ANGLE_RIGHT = 4.5;
+		public static final double CORR_ANGLE_LEFT = 4.5;
 		
 		// positioning
 		public static int X, Y = 0;
@@ -130,7 +131,7 @@ public class main {
 		
 		// wifi settings
 		public static final boolean USE_WIFI = true;
-		public static final String SERVER_IP = "192.168.2.8";
+		public static final String SERVER_IP = "192.168.2.7";
 		//public static final String SERVER_IP = "192.168.2.3";
 		public static final int TEAM_NUMBER = 18;
 		public static final boolean WIFI_DEBUG = false;
@@ -162,9 +163,14 @@ public class main {
 		
 		// sensors
 		public static boolean crossed = false;
+		public static long savedLeft;
+		public static long savedRight;
 		
 		public static boolean crossed() {
-			return Global.leftBlackLineDetected;
+			//return Global.leftBlackLineDetected;
+			Global.savedLeft = Global.leftTime;
+			Global.savedRight = Global.rightTime;
+			return Global.savedLeft > 0 && Global.savedRight > 0;
 		}
 	}
 	
@@ -223,12 +229,11 @@ public class main {
 		Global.leftColorProvider = Global.leftColorSensor.getRedMode();
 		Global.leftColorData = new float[Global.leftColorProvider.sampleSize() + 1];
 		
-		/*
+		
 		Global.rightColorSensorPort = LocalEV3.get().getPort("S4");
 		Global.rightColorSensor = new EV3ColorSensor(Global.rightColorSensorPort);
 		Global.rightColorProvider = Global.rightColorSensor.getRedMode();
 		Global.rightColorData = new float[Global.rightColorProvider.sampleSize() + 1];
-		*/
 		
 		Global.frontColorSensorPort = LocalEV3.get().getPort("S3");
 		Global.frontColorSensor = new EV3ColorSensor(Global.frontColorSensorPort);
@@ -239,11 +244,11 @@ public class main {
 		Global.usSensorThread = new UltrasonicSensor();
 		Global.leftColorSensorThread  = new ColorSensor(0);
 		Global.frontColorSensorThread = new ColorSensor(1);
-		//Global.rightColorSensorThread = new ColorSensor(2);
+		Global.rightColorSensorThread = new ColorSensor(2);
 		
 		// get a starting value for left color sensor
 		Global.leftColorSensorThread.start();
-		//Global.rightColorSensorThread.start();
+		Global.rightColorSensorThread.start();
 		try {
 			Thread.sleep(Global.THREAD_SLEEP_TIME);
 		} catch (Exception e) {}		
@@ -251,12 +256,10 @@ public class main {
 		while(Global.leftColor==0) {}
 		Global.colorThreshhold = (float)(Global.leftColor *0.7);
 		Global.leftColorSensorSwitch = false;
-		/*
 		Global.rightColorSensorSwitch = true;
 		while(Global.rightColor==0) {}
 		Global.rightColorThreshhold = (float)(Global.rightColor *0.7);
 		Global.rightColorSensorSwitch = false;
-		*/
 		
 		// start main thread
 		Global.firstLine = "";

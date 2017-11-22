@@ -19,7 +19,19 @@ public class Navigation extends Thread {
 	private double convertDistanceConstant;
 	
 	private double angleZipline;
+	
 	private int waterOrientation;
+	private int waterInitAngle;
+	private int waterStartX;
+	private int waterStartY;
+	private int waterEndX;
+	private int waterEndY;
+	private int waterAngleToTurn;
+	private int waterFinalAngle;
+	private int beforeWaterX;
+	private int beforeWaterY;
+	private int waterAngleToMiddle;
+	private int waterAngleToWater;
 	
 	/**
 	 * The constructor compute values that will stay constant during the
@@ -29,7 +41,14 @@ public class Navigation extends Thread {
 		convertDistanceConstant = (180.0 / (Math.PI * Global.WHEEL_RADIUS));
 		convertAngleConstant = convertDistanceConstant*Math.PI * Global.TRACK  / 360.0;
 		angleZipline = 0.0;
-		waterOrientation = -1;
+		waterOrientation = 0;
+		waterInitAngle = 0;
+		waterStartX = 0;
+		waterStartY = 0;
+		waterEndX = 0;
+		waterEndY = 0;
+		waterAngleToTurn = 0;
+		waterFinalAngle = 0;
 	}
 
 	/**
@@ -38,11 +57,11 @@ public class Navigation extends Thread {
 	 */
 	public void run() {
 		try {
-			
 			// initial positioning
 			fallingEdge();
 			lightPosition();
 			setStartingCorner();
+			calculateWaterOrientation();
 			
 			System.out.println("After initial localization");
 			System.out.println("X: " + Global.X + " Y: " + Global.Y + " Angle: " + Global.angle);
@@ -78,6 +97,7 @@ public class Navigation extends Thread {
 			// Travel to the search zone and turn to 90 deg.
 			travelTo(Global.searchLL[0], Global.searchLL[1], false, clockwiseTravel);
 			turn(Global.angle - 90, false);
+			Global.angle = 90;
 			
 			System.out.println("\nAt search zone");
 			System.out.println("X: " + Global.X + " Y: " + Global.Y + " Angle: " + Global.angle);
@@ -136,31 +156,37 @@ public class Navigation extends Thread {
 					travelTo(Global.zoneZiplineO[0], Global.zoneZiplineO[1], true, false);
 				// go to shallowHLL
 				else {
-					boolean ccZip = ziplineOnCCPath(Global.shallowHLLx, Global.shallowHLLy, true);
+					boolean ccZip = ziplineOnCCPath(beforeWaterX, beforeWaterY, true);
 					// adjust correction made by setStartingCorner for navigation
 					if (ccZip) {
 						if (Global.startingCorner == 3) {
 							Global.X++;
 							Global.Y--;
-						} else {
+						} else if (Global.startingCorner == 2){
 							Global.X--;
 							Global.Y--;
+						} else if (Global.startingCorner == 1) {
+							Global.X++;
+							Global.Y--;
+						} else {
+							Global.X++;
+							Global.Y++;
 						}
-						turnClockwiseTravel(Global.shallowHLLx, Global.shallowHLLy);
+						turnClockwiseTravel(beforeWaterX, beforeWaterY);
 					}
-					travelTo(Global.shallowHLLx, Global.shallowHLLy, true, ccZip);
+					travelTo(beforeWaterX, beforeWaterY, true, ccZip);
 				}
 			}
 
 			// second transit
 			else {
 				if (Global.teamColor == Global.TeamColor.GREEN) {
-					boolean ccZip = ziplineOnCCPath(Global.shallowHLLx, Global.shallowHLLy, false);
+					boolean ccZip = ziplineOnCCPath(beforeWaterX, beforeWaterY, false);
 					if (ccZip)
-						turnClockwiseTravel(Global.shallowHLLx, Global.shallowHLLy);
+						turnClockwiseTravel(beforeWaterX, beforeWaterY);
 					else
-						turnCounterClockwiseTravel(Global.shallowHLLx, Global.shallowHLLy);
-					travelTo(Global.shallowHLLx, Global.shallowHLLy, false, ccZip);
+						turnCounterClockwiseTravel(beforeWaterX, beforeWaterY);
+					travelTo(beforeWaterX, beforeWaterY, false, ccZip);
 				}
 				else {
 					boolean ccZip = ziplineOnCCPath(Global.oppZiplineO[0], Global.oppZiplineO[1], false);
@@ -257,36 +283,104 @@ public class Navigation extends Thread {
 		Global.rightColorSensorSwitch = true;
 		Thread.sleep(Global.THREAD_SHORT_SLEEP_TIME);
 		
-		calculateWaterOrientation();
+		System.out.println("\nWATER");
+		System.out.println("Init angle: " + waterInitAngle);
+		System.out.println("Orientation: " + waterOrientation);
+		System.out.println("Start X: " + waterStartX + "  Y: " + waterStartY);
+		System.out.println("Angle to turn:" + waterAngleToTurn);
+		System.out.println("End X: " + waterEndX + "  Y: " + waterEndY);
+		System.out.println("Final orientation: " + waterFinalAngle);
 		
-		// water -->
+		// go to the middle
+		turn(Global.angle - waterAngleToMiddle, false);
+		move(10, false);
+		turn(waterAngleToWater, false);
+		//turn(Global.angle - waterInitAngle, false);
+		Global.angle = waterInitAngle;
+		
+		int endAngle;
+		
 		if (this.waterOrientation == 0) {
-			turn(Global.angle, false);
-			Global.angle = 0;
 			Global.X--;
-			Global.Y++;
+			travelX(waterEndX);
+			move(20, false);
+			turn(waterAngleToTurn, false);
+			Global.angle = waterFinalAngle;
+			if (Global.angle == 270) {
+				Global.Y++;
+				waterEndY--;
+				endAngle = 180;
+			}
+			else {
+				Global.Y--;
+				waterEndY++;
+				endAngle = 180;
+			}
+			travelY(waterEndY);
 		} 
-		// water <--
-		else {
-			turn(Global.angle - 180, false);
-			Global.angle = 180;
+		else if (this.waterOrientation == 1){
 			Global.X++;
+			travelX(waterEndX);
+			move(20, false);
+			turn(waterAngleToTurn, false);
+			Global.angle = waterFinalAngle;
+			if (Global.angle == 270) {
+				Global.Y++;
+				waterEndY--;
+				endAngle = 0;
+			}
+			else {
+				Global.Y--;
+				waterEndY++;
+				endAngle = 0;
+			}
+			travelY(waterEndY);
+			
+		} else if (waterOrientation == 2) {
+			Global.Y--;
+			travelY(waterEndY);
+			move(20, false);
+			turn(waterAngleToTurn, false);
+			Global.angle = waterFinalAngle;
+			if (Global.angle == 0) {
+				Global.X--;
+				waterEndX++;
+				endAngle = 270;
+			}
+			else {
+				Global.X++;
+				waterEndX--;
+				endAngle = 270;
+			}
+			travelX(waterEndX);
+			
+		} else {
 			Global.Y++;
+			travelY(waterEndY);
+			move(20, false);
+			turn(waterAngleToTurn, false);
+			Global.angle = waterFinalAngle;
+			if (Global.angle == 0) {
+				Global.X--;
+				waterEndX++;
+				endAngle = 90;
+			}
+			else {
+				Global.X++;
+				waterEndX--;
+				endAngle = 90;
+			}
+			travelX(waterEndX);
 		}
 		
-		System.out.println("\nBefore traversing water");
-		System.out.println("X: " + Global.X + " Y: " + Global.Y + " Angle: " + Global.angle);
+		turn(waterAngleToTurn, false);
+		Global.leftBlackLineDetected = false;
+		move(Global.KEEP_MOVING, true);
+		while(!Global.leftBlackLineDetected) {}
+		move(0, false);
+		move(-Global.ROBOT_LENGTH, false);
 		
-		System.out.println("water x: " + Global.shallowVLLx + " y: " + Global.shallowVLLy);
-		
-		travelX(Global.shallowVLLx);
-		
-		if (this.waterOrientation == 0)
-			turn(90, false);
-		else 
-			turn(-90, false);
-		Global.angle = 270;
-		travelY(Global.shallowVLLy);
+		Global.angle = endAngle;
 		
 		Global.leftColorSensorSwitch = true;
 		Global.rightColorSensorSwitch = true;
@@ -369,11 +463,14 @@ public class Navigation extends Thread {
 			
 			if (!clockwiseTravel) {
 				// turn to the correct direction using the black lines
+				/*
 				turn(-Global.KEEP_MOVING, true);
 				Thread.sleep(Global.THREAD_SLEEP_TIME);
 				Global.leftBlackLineDetected = false;
 				while (!Global.leftBlackLineDetected) {}
 				turn(Global.COLOR_SENSOR_OFFSET_ANGLE, false);
+				*/
+				turn(-90, false);
 				// update angle
 				if (Global.angle == 90)
 					Global.angle = 180;
@@ -403,11 +500,14 @@ public class Navigation extends Thread {
 			
 			if (!clockwiseTravel) {
 				// turn to the correct direction using the black lines
+				/*
 				turn(-Global.KEEP_MOVING, true);
 				Thread.sleep(Global.THREAD_SLEEP_TIME);
 				Global.leftBlackLineDetected = false;
 				while (!Global.leftBlackLineDetected) {}
 				turn(Global.COLOR_SENSOR_OFFSET_ANGLE, false);
+				*/
+				turn(-90, false);
 				// update angle
 				if (Global.angle == 0)
 					Global.angle = 90;
@@ -447,6 +547,8 @@ public class Navigation extends Thread {
 		Global.moving = true;
 		Global.leftBlackLineDetected = false;
 		Global.rightBlackLineDetected = false;
+		Global.leftTime = -1;
+		Global.rightTime = -1;
 		int count = 0;
 		
 		if (x != Global.X) {// verify if moving in x is needed
@@ -466,10 +568,13 @@ public class Navigation extends Thread {
 						Global.X++;
 						Global.leftBlackLineDetected = false;
 						Global.rightBlackLineDetected = false;
+						Global.leftTime = -1;
+						Global.rightTime = -1;
 						
 						if (++count == 2) { // hacky correction
 							move(0, false);
-							turn(Global.CORR_ANGLE, false);
+							turn(timeAngleCorrection(Global.savedLeft, Global.savedRight), false);
+							//turn(Global.CORR_ANGLE, false);
 							move(Global.KEEP_MOVING, true);
 							count = 0;
 						}
@@ -495,10 +600,13 @@ public class Navigation extends Thread {
 						Global.X--;
 						Global.leftBlackLineDetected = false;
 						Global.rightBlackLineDetected = false;
+						Global.leftTime = -1;
+						Global.rightTime = -1;
 						
 						if (++count == 2) { // hacky correction
 							move(0, false);
-							turn(Global.CORR_ANGLE, false);
+							turn(timeAngleCorrection(Global.savedLeft, Global.savedRight), false);
+							//turn(Global.CORR_ANGLE, false);
 							move(Global.KEEP_MOVING, true);
 							count = 0;
 						}
@@ -541,11 +649,14 @@ public class Navigation extends Thread {
 					if (Global.crossed()) {
 						Global.leftBlackLineDetected = false;
 						Global.rightBlackLineDetected = false;
+						Global.leftTime = -1;
+						Global.rightTime = -1;
 						Global.Y++;
 						
 						if (++count == 2) {
 							move(0, false);
-							turn(Global.CORR_ANGLE, false);
+							turn(timeAngleCorrection(Global.savedLeft, Global.savedRight), false);
+							//turn(Global.CORR_ANGLE, false);
 							move(Global.KEEP_MOVING, true);
 							count = 0;
 						}
@@ -568,11 +679,14 @@ public class Navigation extends Thread {
 					if (Global.crossed()) {
 						Global.leftBlackLineDetected = false;
 						Global.rightBlackLineDetected = false;
+						Global.leftTime = -1;
+						Global.rightTime = -1;
 						Global.Y--;
 						
 						if (++count == 2) {
 							move(0, false);
-							turn(Global.CORR_ANGLE, false);
+							turn(timeAngleCorrection(Global.savedLeft, Global.savedRight), false);
+							//turn(Global.CORR_ANGLE, false);
 							move(Global.KEEP_MOVING, true);
 							count = 0;
 						}
@@ -725,15 +839,22 @@ public class Navigation extends Thread {
 		// time in msec
 		long diff = (left-right);
 		
+		System.out.println("\nDIFF: " + diff + "\n");
+		
+		if (Math.abs(diff) < 40)
+			return 0;
+		
 		if (diff > 0) {
-			deg = diff * (long)Global.MOVING_SPEED / 1000;
-			d = (double)Global.WHEEL_RADIUS * deg / (360);
-			angle = Math.asin(d/Global.S_TO_S);
+			angle = Global.CORR_ANGLE_RIGHT;
+			//deg = diff * (long)Global.MOVING_SPEED / 1000;
+			//d = (double)Global.WHEEL_RADIUS * deg / (360);
+			//angle = Math.asin(d/Global.S_TO_S);
 		} else {
-			deg = -diff * (long)Global.MOVING_SPEED / 1000;
-			d = (double)Global.WHEEL_RADIUS * deg / (360);
-			angle = Math.asin(d/Global.S_TO_S);
-			angle *= -1;
+			angle = -Global.CORR_ANGLE_LEFT;
+			//deg = -diff * (long)Global.MOVING_SPEED / 1000;
+			//d = (double)Global.WHEEL_RADIUS * deg / (360);
+			//angle = Math.asin(d/Global.S_TO_S);
+			//angle *= -1;
 		}
 		
 		return angle;
@@ -757,12 +878,12 @@ public class Navigation extends Thread {
 		
 		// zipline straight
 		if (this.angleZipline % 90 == 0) {
-			move(15, false);
+			move(10, false);
 			
 			// go to the middle of a tile
-			turn(-45, false);
+			turn(-60, false);
 			move(20, false);
-			turn(135, false);
+			turn(150, false);
 			lightPosition();
 			
 			// reset angle and position
@@ -777,19 +898,6 @@ public class Navigation extends Thread {
 				Global.angle = 270;
 			else
 				Global.angle = this.angleZipline - 90;
-			
-			/*
-			// move to intersection
-			move(Global.KEEP_MOVING, true);
-			Global.leftBlackLineDetected = false;
-			while (!Global.leftBlackLineDetected) {}
-			move(-Global.ROBOT_LENGTH, false);
-			
-			// reset angle and position
-			Global.angle = this.angleZipline;
-			Global.X = Global.oppZiplineO[0];
-			Global.Y = Global.oppZiplineO[1];
-			*/
 			
 		} else {
 			// go to ~middle of tile
@@ -885,6 +993,11 @@ public class Navigation extends Thread {
 	 */
 	public void turn(double angle, boolean immediatereturn) throws Exception {
 		// clockwise positive
+		if (angle == 270)
+			angle = -90;
+		else if (angle == -270)
+			angle = 90;
+		
 		Global.turning = true;
 		Global.leftMotor.setSpeed(Global.ROTATING_SPEED);
 		Global.rightMotor.setSpeed(Global.ROTATING_SPEED);
@@ -1051,6 +1164,32 @@ public class Navigation extends Thread {
 			break;
 		}
 		
+		boolean ccPath = ziplineOnCCPath(x, y, true);
+		if (ccPath) {
+			turnClockwiseTravel(x, y);
+		} else {
+			turnCounterClockwiseTravel(x, y);
+		}
+		travelTo(x, y, false, ccPath);
+		
+		switch (Global.startingCorner) {
+		case 0:
+			turn(Global.angle - 225, false);
+			break;
+		case 1:
+			turn(Global.angle - 315, false);
+			break;
+		case 2:
+			turn(Global.angle - 45, false);
+			break;
+		case 3:
+			turn(Global.angle - 135, false);
+			break;
+		}
+		
+		move(20, false);
+		
+		/*
 		if (Global.teamColor == Global.TeamColor.GREEN) {
 			// go to last line, robot should be at 270 already
 			turn(Global.angle - 270, false);
@@ -1094,7 +1233,8 @@ public class Navigation extends Thread {
 			
 			travelX(x);
 		}
-	
+		*/
+		
 		Global.leftBlackLineDetected = false;
 		Global.leftColorSensorSwitch = false;
 	}
@@ -1104,9 +1244,115 @@ public class Navigation extends Thread {
 	 * water section.
 	 */
 	public void calculateWaterOrientation() {
-		if (Global.shallowHURx == Global.shallowVURx && Global.shallowHURy == Global.shallowVURy)
-			waterOrientation = 0;
-		else
+		int[] redLL, redUR;
+		if (Global.teamColor == Global.TeamColor.RED) {
+			redLL = Global.zoneLL;
+			redUR = Global.zoneUR;
+		} else {
+			redLL = Global.oppLL;
+			redUR = Global.oppUR;
+		}	
+		
+		// vertical attached
+		if (Global.shallowVLLy == redUR[1]) {
+			waterOrientation = 2;
+			waterStartY = Global.shallowVLLy;
+			beforeWaterY = waterStartY - 1;
+			waterInitAngle = 90;
+			if (Global.shallowHURx == Global.shallowVURx) {
+				waterStartX = Global.shallowVLLx;;
+				waterAngleToTurn = -90;
+				waterFinalAngle = 180;
+				waterEndX = Global.shallowHLLx;
+				waterEndY = Global.shallowHLLy;
+				waterAngleToMiddle = 0;
+				waterAngleToWater = -90;
+			} else {
+				waterStartX = Global.shallowVURx;
+				waterAngleToTurn = 90;
+				waterFinalAngle = 0;
+				waterEndX = Global.shallowHURx;
+				waterEndY = Global.shallowHLLy;
+				waterAngleToMiddle = 180;
+				waterAngleToWater = 90;
+			}
+			beforeWaterX = waterStartX;
+		} 
+		else if (Global.shallowVURy == redLL[1]) {
+			waterOrientation = 3;
+			waterStartY = Global.shallowVURy;
+			beforeWaterY = waterStartY + 1;
+			waterInitAngle = 270;
+			if (Global.shallowHLLx == Global.shallowVLLx) {
+				waterStartX = Global.shallowVURx;
+				waterAngleToTurn = -90;
+				waterFinalAngle = 0;
+				waterEndX = Global.shallowHURx;
+				waterEndY = Global.shallowHURy;
+				waterAngleToMiddle = 180;
+				waterAngleToWater = -90;
+			} else {
+				waterStartX = Global.shallowVLLx;
+				waterAngleToTurn = 90;
+				waterFinalAngle = 180;
+				waterEndX = Global.shallowHLLx;
+				waterEndY = Global.shallowHURy;
+				waterAngleToMiddle = 0;
+				waterAngleToWater = 90;
+			}
+			beforeWaterX = waterStartX;
+		}
+		// horizontal attached
+		else if (Global.shallowHURx == redLL[0]) {
 			waterOrientation = 1;
+			waterStartX = Global.shallowHURx;
+			beforeWaterX = waterStartX + 1;
+			waterInitAngle = 180;
+			
+			if (Global.shallowVURy == Global.shallowHURy) {
+				waterStartY = Global.shallowHLLy;
+				waterAngleToTurn = -90;
+				waterEndX = Global.shallowVURx;
+				waterEndY = Global.shallowVLLy;
+				waterFinalAngle = 270;
+				waterAngleToMiddle = 90;
+				waterAngleToWater = -90;
+			}
+			else {
+				waterStartY = Global.shallowHURy;
+				waterAngleToTurn = 90;
+				waterEndX = Global.shallowVURx;
+				waterEndY = Global.shallowVURy;
+				waterFinalAngle = 90;
+				waterAngleToMiddle = 270;
+				waterAngleToWater = 90;
+			}
+			beforeWaterY = waterStartY;
+		}
+		else if(Global.shallowHLLx == redUR[0]) {
+			waterOrientation = 0;
+			waterStartX = Global.shallowHLLx;
+			beforeWaterX = waterStartX - 1;
+			waterInitAngle = 0;
+			
+			if (Global.shallowVURy == Global.shallowHURy) {
+				waterStartY = Global.shallowHLLy;
+				waterAngleToTurn = 90;
+				waterEndX = Global.shallowVLLx;
+				waterEndY = Global.shallowVLLy;
+				waterFinalAngle = 270;
+				waterAngleToMiddle = 90;
+				waterAngleToWater = 90;
+			} else {
+				waterStartY = Global.shallowHURy;
+				waterAngleToTurn = -90;
+				waterEndX = Global.shallowVLLx;
+				waterEndY = Global.shallowVURy;
+				waterFinalAngle = 90;
+				waterAngleToMiddle = 270;
+				waterAngleToWater = -90;
+			}
+			beforeWaterY = waterStartY;
+		}
 	}
 }

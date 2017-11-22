@@ -43,14 +43,14 @@ public class ColorSensor extends Thread {
 
 					if (Global.leftColor < Global.colorThreshhold) {
 						Global.leftBlackLineDetected = true;
-						//Global.setLeftBlackLineDetected(true, System.currentTimeMillis());
+						Global.leftTime = System.currentTimeMillis();
 						try {
 							Thread.sleep(Global.THREAD_SLEEP_TIME);
 						} catch (InterruptedException e) {
 						}
 					} else {
 						Global.leftBlackLineDetected = false;
-						//Global.setLeftBlackLineDetected(false, -1);
+						Global.leftTime = -1;
 					}
 				} else {
 					try {
@@ -99,12 +99,14 @@ public class ColorSensor extends Thread {
 
 					if (Global.rightColor < Global.rightColorThreshhold) {
 						Global.rightBlackLineDetected = true;
+						Global.rightTime = System.currentTimeMillis();
 						try {
 							Thread.sleep(Global.THREAD_SLEEP_TIME);
 						} catch (InterruptedException e) {
 						}
 					} else {
 						Global.rightBlackLineDetected = false;
+						Global.rightTime = -1;
 					}
 				} else {
 					try {

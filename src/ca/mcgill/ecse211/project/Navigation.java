@@ -56,7 +56,7 @@ public class Navigation extends Thread {
 			// Cross transit
 			if (Global.teamColor == Global.TeamColor.GREEN) {
 				travelZipline();
-				afterZiplineLocalization();
+				afterZiplineLocalization(false);
 			}
 			else
 				travelWater();
@@ -99,7 +99,7 @@ public class Navigation extends Thread {
 				travelWater();
 			else {
 				travelZipline();
-				afterZiplineLocalization();
+				afterZiplineLocalization(true);
 			}
 			
 			System.out.println("\nAfter water");
@@ -137,6 +137,7 @@ public class Navigation extends Thread {
 				// go to shallowHLL
 				else {
 					boolean ccZip = ziplineOnCCPath(Global.shallowHLLx, Global.shallowHLLy, true);
+					// adjust correction made by setStartingCorner for navigation
 					if (ccZip) {
 						if (Global.startingCorner == 3) {
 							Global.X++;
@@ -162,8 +163,12 @@ public class Navigation extends Thread {
 					travelTo(Global.shallowHLLx, Global.shallowHLLy, false, ccZip);
 				}
 				else {
-					turnCounterClockwiseTravel(Global.oppZiplineO[0], Global.oppZiplineO[1]);
-					travelTo(Global.oppZiplineO[0], Global.oppZiplineO[1], false, false);
+					boolean ccZip = ziplineOnCCPath(Global.oppZiplineO[0], Global.oppZiplineO[1], false);
+					if (ccZip)
+						turnClockwiseTravel(Global.oppZiplineO[0], Global.oppZiplineO[1]);
+					else
+						turnCounterClockwiseTravel(Global.oppZiplineO[0], Global.oppZiplineO[1]);
+					travelTo(Global.oppZiplineO[0], Global.oppZiplineO[1], false, ccZip);
 				}
 			}
 		} catch (Exception e) {}
@@ -745,11 +750,11 @@ public class Navigation extends Thread {
 	 * routine.
 	 * @throws Exception
 	 */
-	public void afterZiplineLocalization() throws Exception {
+	public void afterZiplineLocalization(boolean zone) throws Exception {
 		// start left color sensor
 		Global.leftColorSensorSwitch = true;
 		Thread.sleep(Global.THREAD_SLEEP_TIME);
-	
+		
 		// zipline straight
 		if (this.angleZipline % 90 == 0) {
 			move(15, false);
@@ -761,8 +766,13 @@ public class Navigation extends Thread {
 			lightPosition();
 			
 			// reset angle and position
-			Global.X = Global.oppZiplineO[0];
-			Global.Y = Global.oppZiplineO[1];
+			if (!zone) {
+				Global.X = Global.oppZiplineO[0];
+				Global.Y = Global.oppZiplineO[1];
+			} else {
+				Global.X = Global.zoneZiplineO[0];
+				Global.Y = Global.zoneZiplineO[1];
+			}
 			if (this.angleZipline == 0)
 				Global.angle = 270;
 			else
@@ -785,37 +795,46 @@ public class Navigation extends Thread {
 			// go to ~middle of tile
 			move(45, false);
 			
+			int zipX, zipY;
+			if (zone) {
+				zipX = Global.zoneZipline[0];
+				zipY = Global.zoneZipline[1];
+			} else {
+				zipX = Global.oppZipline[0];
+				zipY = Global.oppZipline[1];
+			}
+			
 			// closest angle + reset coords (expected coords after lightPos)
 			if ((this.angleZipline>=0 && this.angleZipline<=45) || (this.angleZipline>315 && this.angleZipline<=360)) {
 				if (this.angleZipline>=0 && this.angleZipline<=45) {
 					turn(this.angleZipline, false);
-					Global.Y = Global.oppZipline[1] + 1;
+					Global.Y = zipY + 1;
 				}
 				else {
 					turn(this.angleZipline - 360.0, false);
-					Global.Y = Global.oppZipline[1];
+					Global.Y = zipY;
 				}
 				Global.angle = 0; // now 0, after lightPos 90
-				Global.X = Global.oppZipline[0] + 1;
+				Global.X = zipX + 1;
 			} else if (this.angleZipline>45 && this.angleZipline<=135) {
 				turn(this.angleZipline-90, false);
 				Global.angle = 90; // now 90, after lightPos 180
-				Global.Y = Global.oppZipline[1] + 1;
-				Global.X = Global.oppZipline[0];
+				Global.Y = zipY + 1;
+				Global.X = zipX;
 				if (this.angleZipline > 90)
 					Global.X--;
 			} else if (this.angleZipline>135 && this.angleZipline<=225) {
 				turn(this.angleZipline-180, false);
 				Global.angle = 180; // now 180, after lightPos 270
-				Global.X = Global.oppZipline[0] - 1;
-				Global.Y = Global.oppZipline[1];
+				Global.X = zipX - 1;
+				Global.Y = zipY;
 				if (this.angleZipline > 180)
 					Global.Y--;
 			} else {
 				turn(this.angleZipline-270, false);
 				Global.angle = 270;  // now 270, after lightPos 0
-				Global.X = Global.oppZipline[0];
-				Global.Y = Global.oppZipline[1] - 1;
+				Global.X = zipX;
+				Global.Y = zipY - 1;
 				if (this.angleZipline > 270)
 					Global.X++;
 			}

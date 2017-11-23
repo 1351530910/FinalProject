@@ -57,6 +57,7 @@ public class Navigation extends Thread {
 	 */
 	public void run() {
 		try {
+			
 			// initial positioning
 			fallingEdge();
 			lightPosition();
@@ -104,7 +105,12 @@ public class Navigation extends Thread {
 			
 			// find the flag
 			findFlag();
-
+			
+			Global.leftBlackLineDetected = false;
+			Global.rightBlackLineDetected = false;
+			Global.leftTime = -1;
+			Global.rightTime = -1;
+			
 			System.out.println("\nAfter finding flag");
 			System.out.println("X: " + Global.X + " Y: " + Global.Y + " Angle: " + Global.angle);
 			
@@ -119,7 +125,18 @@ public class Navigation extends Thread {
 				travelWater();
 			else {
 				travelZipline();
-				afterZiplineLocalization(true);
+				//afterZiplineLocalization(true);
+				move(15, false);
+				Global.leftColorSensorSwitch = true;
+				Thread.sleep(Global.THREAD_SHORT_SLEEP_TIME);
+				move(Global.KEEP_MOVING, true);
+				Global.leftBlackLineDetected = false;
+				while (!Global.leftBlackLineDetected) {}
+				move(0, false);
+				move(-Global.ROBOT_LENGTH, false);
+				Global.X = Global.zoneZiplineO[0];
+				Global.Y = Global.zoneZiplineO[1];
+				Global.angle = this.angleZipline;
 			}
 			
 			System.out.println("\nAfter water");
@@ -166,14 +183,17 @@ public class Navigation extends Thread {
 							Global.X--;
 							Global.Y--;
 						} else if (Global.startingCorner == 1) {
-							Global.X++;
-							Global.Y--;
+							Global.X--;
+							Global.Y++;
 						} else {
 							Global.X++;
 							Global.Y++;
 						}
 						turnClockwiseTravel(beforeWaterX, beforeWaterY);
 					}
+					System.out.println("Traveling to water:");
+					System.out.println("X: " + Global.X + "  Y: " + Global.Y + "  Angle: " + Global.angle);
+					System.out.println("water X: " + beforeWaterX + "   Water Y: " + beforeWaterY);
 					travelTo(beforeWaterX, beforeWaterY, true, ccZip);
 				}
 			}
@@ -256,7 +276,7 @@ public class Navigation extends Thread {
 		turn(angleToTurn, false);
 		
 		// traverse zipline
-		Global.ziplineMotor.setSpeed(Global.MOVING_SPEED);
+		Global.ziplineMotor.setSpeed(Global.ZIPLINE_SPEED);
 		Global.ziplineMotor.backward();
 		move(60, false);
 		Global.leftMotor.stop();
@@ -266,7 +286,7 @@ public class Navigation extends Thread {
 		
 		Thread.sleep(Global.ZIPLINE_TIME);
 		Global.ziplineMotor.stop();
-		turn(-15, false); // correct landing
+		turn(-20, false); // correct landing
 	}
 
 	/**
@@ -281,6 +301,7 @@ public class Navigation extends Thread {
 	public void travelWater() throws Exception {
 		Global.leftColorSensorSwitch = true;
 		Global.rightColorSensorSwitch = true;
+		Global.water = true;
 		Thread.sleep(Global.THREAD_SHORT_SLEEP_TIME);
 		
 		System.out.println("\nWATER");
@@ -303,7 +324,7 @@ public class Navigation extends Thread {
 		if (this.waterOrientation == 0) {
 			Global.X--;
 			travelX(waterEndX);
-			move(20, false);
+			move(10, false);
 			turn(waterAngleToTurn, false);
 			Global.angle = waterFinalAngle;
 			if (Global.angle == 270) {
@@ -316,12 +337,13 @@ public class Navigation extends Thread {
 				waterEndY++;
 				endAngle = 180;
 			}
+			move(10, false);
 			travelY(waterEndY);
 		} 
 		else if (this.waterOrientation == 1){
 			Global.X++;
 			travelX(waterEndX);
-			move(20, false);
+			move(10, false);
 			turn(waterAngleToTurn, false);
 			Global.angle = waterFinalAngle;
 			if (Global.angle == 270) {
@@ -334,12 +356,13 @@ public class Navigation extends Thread {
 				waterEndY++;
 				endAngle = 0;
 			}
+			move(10, false);
 			travelY(waterEndY);
 			
 		} else if (waterOrientation == 2) {
 			Global.Y--;
 			travelY(waterEndY);
-			move(20, false);
+			move(10, false);
 			turn(waterAngleToTurn, false);
 			Global.angle = waterFinalAngle;
 			if (Global.angle == 0) {
@@ -352,12 +375,13 @@ public class Navigation extends Thread {
 				waterEndX--;
 				endAngle = 270;
 			}
+			move(10, false);
 			travelX(waterEndX);
 			
 		} else {
 			Global.Y++;
 			travelY(waterEndY);
-			move(20, false);
+			move(10, false);
 			turn(waterAngleToTurn, false);
 			Global.angle = waterFinalAngle;
 			if (Global.angle == 0) {
@@ -370,6 +394,7 @@ public class Navigation extends Thread {
 				waterEndX--;
 				endAngle = 90;
 			}
+			move(10, false);
 			travelX(waterEndX);
 		}
 		
@@ -384,6 +409,7 @@ public class Navigation extends Thread {
 		
 		Global.leftColorSensorSwitch = true;
 		Global.rightColorSensorSwitch = true;
+		Global.water = false;
 	}
 
 	/**
@@ -394,12 +420,11 @@ public class Navigation extends Thread {
 	 */
 	public void findFlag() throws Exception {
 		
-		for (int i=0; i<3; i++) {
-			Sound.beep();
-		}
-		
-		/*Global.usSwitch = true;
+		Global.usSwitch = true;
 		Global.frontColorSensorSwitch = true;
+		Global.ObstacleDistance = 100;
+		
+		Thread.sleep(Global.THREAD_SLEEP_TIME);
 		
 		boolean findflag = true;
 		int count = 0;
@@ -407,31 +432,27 @@ public class Navigation extends Thread {
 		//turn and scan for flag
 		while (findflag) {
 			count++;
-			turn(-5, false);
-			if (Global.ObstacleDistance<=40) {
+			turn(10, false);
+			System.out.println("US: " + Global.ObstacleDistance);
+			if (Global.ObstacleDistance<=45) {
 				Global.rightMotor.stop();
 				Global.leftMotor.stop();
-				move(Global.SQUARE_LENGTH*1.5, false);
 				Thread.sleep(Global.THREAD_SLEEP_TIME);
-				if (Global.flagDetected) {
-					findflag = false;
-					Button.waitForAnyPress();
-					move(-Global.SQUARE_LENGTH*1.5, false);
-				}
-				else {
-					move(-Global.SQUARE_LENGTH*1.5, false);
-				}
+				findflag = false;
 			}
+			if (count == 8)
+				findflag = false;
 		}
 		
-		//return to initial orientation
-		while(count-->0) {
-			turn(5, false);
+		for (int i=0; i<3; i++) {
+			Sound.beep();
 		}
+		//return to initial orientation
+		turn(-10 * count, false);
 		
 		Global.usSwitch = false;
 		Global.frontColorSensorSwitch = false;
-		*/
+		
 	}
 	
 	/**
@@ -571,7 +592,7 @@ public class Navigation extends Thread {
 						Global.leftTime = -1;
 						Global.rightTime = -1;
 						
-						if (++count == 2) { // hacky correction
+						if (++count == Global.CORRECTION_MAX_COUNT || Global.water) { // hacky correction
 							move(0, false);
 							turn(timeAngleCorrection(Global.savedLeft, Global.savedRight), false);
 							//turn(Global.CORR_ANGLE, false);
@@ -603,7 +624,7 @@ public class Navigation extends Thread {
 						Global.leftTime = -1;
 						Global.rightTime = -1;
 						
-						if (++count == 2) { // hacky correction
+						if (++count == Global.CORRECTION_MAX_COUNT || Global.water) { // hacky correction
 							move(0, false);
 							turn(timeAngleCorrection(Global.savedLeft, Global.savedRight), false);
 							//turn(Global.CORR_ANGLE, false);
@@ -653,7 +674,7 @@ public class Navigation extends Thread {
 						Global.rightTime = -1;
 						Global.Y++;
 						
-						if (++count == 2) {
+						if (++count == Global.CORRECTION_MAX_COUNT || Global.water) {
 							move(0, false);
 							turn(timeAngleCorrection(Global.savedLeft, Global.savedRight), false);
 							//turn(Global.CORR_ANGLE, false);
@@ -683,7 +704,7 @@ public class Navigation extends Thread {
 						Global.rightTime = -1;
 						Global.Y--;
 						
-						if (++count == 2) {
+						if (++count == Global.CORRECTION_MAX_COUNT || Global.water) {
 							move(0, false);
 							turn(timeAngleCorrection(Global.savedLeft, Global.savedRight), false);
 							//turn(Global.CORR_ANGLE, false);
@@ -841,7 +862,7 @@ public class Navigation extends Thread {
 		
 		System.out.println("\nDIFF: " + diff + "\n");
 		
-		if (Math.abs(diff) < 40)
+		if (Math.abs(diff) < 30)
 			return 0;
 		
 		if (diff > 0) {
@@ -881,9 +902,9 @@ public class Navigation extends Thread {
 			move(10, false);
 			
 			// go to the middle of a tile
-			turn(-60, false);
+			turn(-50, false);
 			move(20, false);
-			turn(150, false);
+			turn(140, false);
 			lightPosition();
 			
 			// reset angle and position
@@ -969,7 +990,7 @@ public class Navigation extends Thread {
 	 */
 	public void move(double distance, boolean immediatereturn) throws Exception {
 
-		Global.leftMotor.setSpeed(Global.MOVING_SPEED);
+		Global.leftMotor.setSpeed(Global.MOVING_SPEED + 2);
 		Global.rightMotor.setSpeed(Global.MOVING_SPEED);
 
 		Global.leftMotor.rotate((int)(distance*convertDistanceConstant), true);

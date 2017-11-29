@@ -108,13 +108,12 @@ public class main {
 		public static final int THREAD_SLEEP_TIME = 1500;
 		public static final int ACCELERATION = 2000;
 		public static final double WHEEL_RADIUS = 2.116;
-		public static final double TRACK = 10.33;
+		public static final double TRACK = 10.5;
 		public static final int ROTATING_SPEED = 135;
 		public static final int MOVING_SPEED = 260;
 		public static final int ZIPLINE_SPEED = 275;
 		public static double ROBOT_LENGTH = 10.5;
 		public static final int COLOR_SENSOR_OFFSET_ANGLE = 31;
-		public static final int COLOR_SENSOR_OFFSET_ANGLE_WITH_BLACKBAND = 33;
 		public static final double SQUARE_LENGTH = 30.5;
 		public static final int KEEP_MOVING = 3000;
 		public static final int STOP_MOVING = 0;
@@ -122,10 +121,8 @@ public class main {
 		public static final int FALLING_EDGE_ANGLE = -65;
 		public static final int USThreshhold = 40;
 		public static final int ZIPLINE_TIME = 23000;
-		public static final int SQUARE_DIAGONAL = 43;
-		public static final double S_TO_S = 11.5;
-		public static final double CORR_ANGLE_RIGHT = 4;
-		public static final double CORR_ANGLE_LEFT = 4;
+		public static final double CORR_ANGLE_RIGHT = 5;
+		public static final double CORR_ANGLE_LEFT = 5;
 		public static final int CORRECTION_MAX_COUNT = 2;
 		
 		// positioning
@@ -134,8 +131,8 @@ public class main {
 		
 		// wifi settings
 		public static final boolean USE_WIFI = true;
-		public static final String SERVER_IP = "192.168.2.10";
-		//public static final String SERVER_IP = "192.168.2.3";
+		//public static final String SERVER_IP = "172.20.10.2";
+		public static final String SERVER_IP = "192.168.2.3";
 		public static final int TEAM_NUMBER = 18;
 		public static final boolean WIFI_DEBUG = false;
 		
@@ -174,6 +171,13 @@ public class main {
 			Global.savedLeft = Global.leftTime;
 			Global.savedRight = Global.rightTime;
 			return Global.savedLeft > 0 && Global.savedRight > 0;
+		}
+		
+		public static void resetBlackLines() {
+			Global.leftTime = -1;
+			Global.rightTime = -1;
+			Global.leftBlackLineDetected = false;
+			Global.rightBlackLineDetected = false;
 		}
 	}
 	
@@ -228,7 +232,7 @@ public class main {
 		Global.frontColorSensorThread = new ColorSensor(1);
 		Global.rightColorSensorThread = new ColorSensor(2);
 		
-		// get a starting value for left color sensor
+		// get a starting value for left-right color sensors
 		Global.leftColorSensorThread.start();
 		Global.rightColorSensorThread.start();
 		try {
@@ -236,11 +240,11 @@ public class main {
 		} catch (Exception e) {}		
 		Global.leftColorSensorSwitch = true;
 		while(Global.leftColor==0) {}
-		Global.colorThreshhold = (float)(Global.leftColor *0.7);
+		Global.colorThreshhold = (float)(Global.leftColor *0.65);
 		Global.leftColorSensorSwitch = false;
 		Global.rightColorSensorSwitch = true;
 		while(Global.rightColor==0) {}
-		Global.rightColorThreshhold = (float)(Global.rightColor *0.7);
+		Global.rightColorThreshhold = (float)(Global.rightColor *0.65);
 		Global.rightColorSensorSwitch = false;
 		
 		

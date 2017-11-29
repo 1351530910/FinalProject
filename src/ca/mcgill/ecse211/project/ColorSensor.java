@@ -1,6 +1,7 @@
 package ca.mcgill.ecse211.project;
 
 import ca.mcgill.ecse211.project.main.Global;
+import lejos.hardware.Sound;
 
 /**
  * Thread implementation of a ColorSensor
@@ -16,6 +17,7 @@ public class ColorSensor extends Thread {
 	 * <ul>
 	 * <li>0 -> left color sensor in RED mode</li>
 	 * <li>1 -> front color sensor in RGB mode</li>
+	 * <li>2 -> right color sensor in RED mode</li>
 	 * </ul>
 	 * 
 	 * @param id
@@ -36,8 +38,8 @@ public class ColorSensor extends Thread {
 
 		if (id==0) {
 			while (true) {
-				if (Global.leftColorSensorSwitch) {
-
+				if (Global.leftColorSensorSwitch) {					
+					
 					Global.leftColorProvider.fetchSample(Global.leftColorData, 0);
 					Global.leftColor = Global.leftColorData[0];
 

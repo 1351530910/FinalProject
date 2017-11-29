@@ -41,14 +41,7 @@ public class Navigation extends Thread {
 		convertDistanceConstant = (180.0 / (Math.PI * Global.WHEEL_RADIUS));
 		convertAngleConstant = convertDistanceConstant*Math.PI * Global.TRACK  / 360.0;
 		angleZipline = 0.0;
-		waterOrientation = 0;
-		waterInitAngle = 0;
-		waterStartX = 0;
-		waterStartY = 0;
-		waterEndX = 0;
-		waterEndY = 0;
-		waterAngleToTurn = 0;
-		waterFinalAngle = 0;
+		calculateWaterOrientation();
 	}
 
 	/**
@@ -57,12 +50,10 @@ public class Navigation extends Thread {
 	 */
 	public void run() {
 		try {
-			
 			// initial positioning
 			fallingEdge();
 			lightPosition();
 			setStartingCorner();
-			calculateWaterOrientation();
 			
 			System.out.println("After initial localization");
 			System.out.println("X: " + Global.X + " Y: " + Global.Y + " Angle: " + Global.angle);
@@ -125,18 +116,7 @@ public class Navigation extends Thread {
 				travelWater();
 			else {
 				travelZipline();
-				//afterZiplineLocalization(true);
-				move(15, false);
-				Global.leftColorSensorSwitch = true;
-				Thread.sleep(Global.THREAD_SHORT_SLEEP_TIME);
-				move(Global.KEEP_MOVING, true);
-				Global.leftBlackLineDetected = false;
-				while (!Global.leftBlackLineDetected) {}
-				move(0, false);
-				move(-Global.ROBOT_LENGTH, false);
-				Global.X = Global.zoneZiplineO[0];
-				Global.Y = Global.zoneZiplineO[1];
-				Global.angle = this.angleZipline;
+				afterZiplineLocalization(true);
 			}
 			
 			System.out.println("\nAfter water");
@@ -316,7 +296,6 @@ public class Navigation extends Thread {
 		turn(Global.angle - waterAngleToMiddle, false);
 		move(10, false);
 		turn(waterAngleToWater, false);
-		//turn(Global.angle - waterInitAngle, false);
 		Global.angle = waterInitAngle;
 		
 		int endAngle;
@@ -419,7 +398,7 @@ public class Navigation extends Thread {
 	 * @throws Exception 
 	 */
 	public void findFlag() throws Exception {
-		
+
 		Global.usSwitch = true;
 		Global.frontColorSensorSwitch = true;
 		Global.ObstacleDistance = 100;
@@ -440,7 +419,7 @@ public class Navigation extends Thread {
 				Thread.sleep(Global.THREAD_SLEEP_TIME);
 				findflag = false;
 			}
-			if (count == 8)
+			if (count == 9)
 				findflag = false;
 		}
 		
@@ -452,7 +431,7 @@ public class Navigation extends Thread {
 		
 		Global.usSwitch = false;
 		Global.frontColorSensorSwitch = false;
-		
+				
 	}
 	
 	/**
@@ -473,6 +452,8 @@ public class Navigation extends Thread {
 		Global.leftColorSensorSwitch = true;
 		Global.rightColorSensorSwitch = true;
 		Thread.sleep(Global.THREAD_SLEEP_TIME);
+		
+		Global.resetBlackLines();
 
 		if (Global.angle == 90 || Global.angle == 270) {
 			
@@ -484,13 +465,6 @@ public class Navigation extends Thread {
 			
 			if (!clockwiseTravel) {
 				// turn to the correct direction using the black lines
-				/*
-				turn(-Global.KEEP_MOVING, true);
-				Thread.sleep(Global.THREAD_SLEEP_TIME);
-				Global.leftBlackLineDetected = false;
-				while (!Global.leftBlackLineDetected) {}
-				turn(Global.COLOR_SENSOR_OFFSET_ANGLE, false);
-				*/
 				turn(-90, false);
 				// update angle
 				if (Global.angle == 90)
@@ -511,6 +485,7 @@ public class Navigation extends Thread {
 				if (wallCorrection)
 					move(-30, false);
 			
+			Global.resetBlackLines();
 			travelX(x);
 			
 		} else {
@@ -521,13 +496,6 @@ public class Navigation extends Thread {
 			
 			if (!clockwiseTravel) {
 				// turn to the correct direction using the black lines
-				/*
-				turn(-Global.KEEP_MOVING, true);
-				Thread.sleep(Global.THREAD_SLEEP_TIME);
-				Global.leftBlackLineDetected = false;
-				while (!Global.leftBlackLineDetected) {}
-				turn(Global.COLOR_SENSOR_OFFSET_ANGLE, false);
-				*/
 				turn(-90, false);
 				// update angle
 				if (Global.angle == 0)
@@ -548,6 +516,7 @@ public class Navigation extends Thread {
 				if (wallCorrection)
 					move(-30, false);
 			
+			Global.resetBlackLines();
 			travelY(y);
 		}
 		
@@ -566,10 +535,7 @@ public class Navigation extends Thread {
 	public void travelX(int x) throws Exception {
 		// move across x
 		Global.moving = true;
-		Global.leftBlackLineDetected = false;
-		Global.rightBlackLineDetected = false;
-		Global.leftTime = -1;
-		Global.rightTime = -1;
+		Global.resetBlackLines();
 		int count = 0;
 		
 		if (x != Global.X) {// verify if moving in x is needed
@@ -582,20 +548,17 @@ public class Navigation extends Thread {
 					return;
 				}
 				
+				Global.resetBlackLines();
 				move(Global.KEEP_MOVING, true);// keep moving forward
 
 				while (Global.X < x) {// count the blacklines traveled and stop when the destination is reached
 					if (Global.crossed()) {
 						Global.X++;
-						Global.leftBlackLineDetected = false;
-						Global.rightBlackLineDetected = false;
-						Global.leftTime = -1;
-						Global.rightTime = -1;
+						Global.resetBlackLines();
 						
 						if (++count == Global.CORRECTION_MAX_COUNT || Global.water) { // hacky correction
 							move(0, false);
 							turn(timeAngleCorrection(Global.savedLeft, Global.savedRight), false);
-							//turn(Global.CORR_ANGLE, false);
 							move(Global.KEEP_MOVING, true);
 							count = 0;
 						}
@@ -614,20 +577,17 @@ public class Navigation extends Thread {
 					return;
 				}
 				
+				Global.resetBlackLines();
 				move(Global.KEEP_MOVING, true);// keep moving backward
 
 				while (Global.X > x) {// count the blacklines traveled and stop when the destination is reached
 					if (Global.crossed()) {
 						Global.X--;
-						Global.leftBlackLineDetected = false;
-						Global.rightBlackLineDetected = false;
-						Global.leftTime = -1;
-						Global.rightTime = -1;
+						Global.resetBlackLines();
 						
 						if (++count == Global.CORRECTION_MAX_COUNT || Global.water) { // hacky correction
 							move(0, false);
 							turn(timeAngleCorrection(Global.savedLeft, Global.savedRight), false);
-							//turn(Global.CORR_ANGLE, false);
 							move(Global.KEEP_MOVING, true);
 							count = 0;
 						}
@@ -664,25 +624,21 @@ public class Navigation extends Thread {
 					return;
 				}
 				
+				
+				Global.resetBlackLines();
 				move(Global.KEEP_MOVING, true);// keep moving forward
 
 				while (Global.Y < y) {// count the blacklines traveled and stop when the destination is reached
 					if (Global.crossed()) {
-						Global.leftBlackLineDetected = false;
-						Global.rightBlackLineDetected = false;
-						Global.leftTime = -1;
-						Global.rightTime = -1;
+						Global.resetBlackLines();
 						Global.Y++;
 						
 						if (++count == Global.CORRECTION_MAX_COUNT || Global.water) {
 							move(0, false);
 							turn(timeAngleCorrection(Global.savedLeft, Global.savedRight), false);
-							//turn(Global.CORR_ANGLE, false);
 							move(Global.KEEP_MOVING, true);
 							count = 0;
 						}
-						
-						
 						Thread.sleep(Global.THREAD_SHORT_SLEEP_TIME);
 					}
 				}
@@ -694,20 +650,17 @@ public class Navigation extends Thread {
 					return;
 				}
 				
+				Global.resetBlackLines();
 				move(Global.KEEP_MOVING, true);// keep moving backward
 
 				while (Global.Y > y) {// count the blacklines traveled and stop when the destination is reached
 					if (Global.crossed()) {
-						Global.leftBlackLineDetected = false;
-						Global.rightBlackLineDetected = false;
-						Global.leftTime = -1;
-						Global.rightTime = -1;
+						Global.resetBlackLines();
 						Global.Y--;
 						
 						if (++count == Global.CORRECTION_MAX_COUNT || Global.water) {
 							move(0, false);
 							turn(timeAngleCorrection(Global.savedLeft, Global.savedRight), false);
-							//turn(Global.CORR_ANGLE, false);
 							move(Global.KEEP_MOVING, true);
 							count = 0;
 						}
@@ -867,15 +820,8 @@ public class Navigation extends Thread {
 		
 		if (diff > 0) {
 			angle = Global.CORR_ANGLE_RIGHT;
-			//deg = diff * (long)Global.MOVING_SPEED / 1000;
-			//d = (double)Global.WHEEL_RADIUS * deg / (360);
-			//angle = Math.asin(d/Global.S_TO_S);
 		} else {
 			angle = -Global.CORR_ANGLE_LEFT;
-			//deg = -diff * (long)Global.MOVING_SPEED / 1000;
-			//d = (double)Global.WHEEL_RADIUS * deg / (360);
-			//angle = Math.asin(d/Global.S_TO_S);
-			//angle *= -1;
 		}
 		
 		return angle;
@@ -899,7 +845,7 @@ public class Navigation extends Thread {
 		
 		// zipline straight
 		if (this.angleZipline % 90 == 0) {
-			move(10, false);
+			move(15, false);
 			
 			// go to the middle of a tile
 			turn(-50, false);
@@ -922,7 +868,7 @@ public class Navigation extends Thread {
 			
 		} else {
 			// go to ~middle of tile
-			move(45, false);
+			move(35, false);
 			
 			int zipX, zipY;
 			if (zone) {
@@ -967,6 +913,7 @@ public class Navigation extends Thread {
 				if (this.angleZipline > 270)
 					Global.X++;
 			}
+			move(10, false);
 			lightPosition();
 		}
 		
@@ -1086,7 +1033,6 @@ public class Navigation extends Thread {
 		// reset X
 		// move until sensor sees black line
 		move(Global.KEEP_MOVING, true);
-		Global.leftBlackLineDetected = false;
 		while (!Global.leftBlackLineDetected) {
 		}
 
@@ -1138,18 +1084,18 @@ public class Navigation extends Thread {
 			Global.angle = 0;
 			break;
 		case 1:
-			Global.X = 8;
+			Global.X = 12;
 			Global.Y = 0;
 			Global.angle = 90;
 			break;
 		case 2:
-			Global.X = 8;
-			Global.Y = 8;
+			Global.X = 12;
+			Global.Y = 12;
 			Global.angle = 180;
 			break;
 		case 3:
 			Global.X = 0;
-			Global.Y = 8;
+			Global.Y = 12;
 			Global.angle = 270;
 		}
 	}
@@ -1172,16 +1118,16 @@ public class Navigation extends Thread {
 			y = 1;
 			break;
 		case 1:
-			x = 7;
+			x = 11;
 			y = 1;
 			break;
 		case 2:
-			x = 7;
-			y = 7;
+			x = 11;
+			y = 11;
 			break;
 		case 3:
 			x = 1;
-			y = 7;
+			y = 11;
 			break;
 		}
 		
@@ -1209,52 +1155,6 @@ public class Navigation extends Thread {
 		}
 		
 		move(20, false);
-		
-		/*
-		if (Global.teamColor == Global.TeamColor.GREEN) {
-			// go to last line, robot should be at 270 already
-			turn(Global.angle - 270, false);
-			Global.Y++;
-			travelY(1);
-			
-			//wall correction
-			move(30, false);
-			move(-10, false);
-			
-			if (Global.startingCorner == 0) {
-				turn(90, false);
-				Global.angle = 0;
-				Global.X++;
-			} else {
-				turn(-90, false);
-				Global.angle = 180;
-				Global.X--;
-			}
-			
-			travelX(x);
-			
-		} else {
-			turn(Global.angle - 90, false);
-			Global.Y--;
-			travelY(y);
-			
-			// wall correction
-			move(30, false);
-			move(-10, false);
-			
-			if (Global.startingCorner == 3) {
-				turn(-90, false);
-				Global.angle = 180;
-				Global.X++;
-			} else {
-				turn(90, false);
-				Global.angle = 0;
-				Global.X--;
-			}
-			
-			travelX(x);
-		}
-		*/
 		
 		Global.leftBlackLineDetected = false;
 		Global.leftColorSensorSwitch = false;
